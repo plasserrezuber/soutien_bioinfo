@@ -1,0 +1,21 @@
+git init
+git config --global user.name "WATIL NEZHA"
+git config --global user.email "nezha.watil@inrae.fr"
+git status
+git add ~/bingit/0*
+git commit -m "initial commit"
+git remote add pbaa https://forgemia.inra.fr/nezha.watil/nwatil_stagem2.git
+git remote -v
+git status
+git push -u pbaa master:pbaa-branch
+git add ~/bingit/README_01.md
+git commit -m "add readme"
+git push -u pbaa master:pbaa-branch
+git checkout -b python-branch
+git branch --list
+git add ~/bingit/2*
+git add ~/bingit/README_02.txt
+git commit -m "initial commit py"
+git push -u pbaa python-branch:python-branch
+
+
