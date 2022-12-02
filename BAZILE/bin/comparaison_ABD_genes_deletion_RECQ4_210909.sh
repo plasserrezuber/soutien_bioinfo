@@ -61,19 +61,22 @@ sed -i 's/ //g' /home/palasser/soutien_bioinfo/BAZILE/RECQ4_PEP_FASTA/OrthoFinde
 gawk -v OFS='\t' '{print gsub(/Traes/,"Traes"),$0}' /home/palasser/soutien_bioinfo/BAZILE/RECQ4_PEP_FASTA/OrthoFinder/blastp_Nov02/Orthogroups/Orthogroups.tsv \
 |gawk -v OFS='\t' '{print "_"gsub(/A/,"A",$0)gsub(/B/,"B",$0)gsub(/D/,"D",$0),$0}' |gawk '{print $3,$2,$1,$4,$5,$6}' |tr -d $'\r' |tr ' ' '\t' > $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv
 
-##sous-genome A
-cat <(cut -f1,2,3,4 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,4 |gawk '{if ($4~"Traes") print $0}') \
-<(cut -f1,2,3,4 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,5 |gawk '{if ($4~"Traes") print $0}') \
-<(cut -f1,2,3,4 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,6 |gawk '{if ($4~"Traes") print $0}') \
-<(cut -f1,2,3,4 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,7 |gawk '{if ($4~"Traes") print $0}') \
-<(cut -f1,2,3,4 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,8 |gawk '{if ($4~"Traes") print $0}') \
-<(cut -f1,2,3,4 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,9 |gawk '{if ($4~"Traes") print $0}') \
-<(cut -f1,2,3,4 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,10 |gawk '{if ($4~"Traes") print $0}') \
-<(cut -f1,2,3,4 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,11 |gawk '{if ($4~"Traes") print $0}') \
-<(cut -f1,2,3,4 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,12 |gawk '{if ($4~"Traes") print $0}') \
-<(cut -f1,2,3,4 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,13 |gawk '{if ($4~"Traes") print $0}') |sort -k2,2 > $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS_A.tsv
 
-##sous-genome B
+
+##group 1 A ou B ou D
+cat <(cut -f1,2,3,4 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,4 |gawk '{if ($4~"TraesRN2A") print $0}') \
+<(cut -f1,2,3,4 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,5 |gawk '{if ($4~"TraesRN2A") print $0}') \
+<(cut -f1,2,3,4 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,6 |gawk '{if ($4~"TraesRN2A") print $0}') \
+<(cut -f1,2,3,4 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,7 |gawk '{if ($4~"TraesRN2A") print $0}') \
+<(cut -f1,2,3,4 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,8 |gawk '{if ($4~"TraesRN2A") print $0}') \
+<(cut -f1,2,3,4 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,9 |gawk '{if ($4~"TraesRN2A") print $0}') \
+<(cut -f1,2,3,4 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,10 |gawk '{if ($4~"TraesRN2A") print $0}') \
+<(cut -f1,2,3,4 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,11 |gawk '{if ($4~"TraesRN2A") print $0}') \
+<(cut -f1,2,3,4 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,12 |gawk '{if ($4~"TraesRN2A") print $0}') \
+<(cut -f1,2,3,4 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,13 |gawk '{if ($4~"TraesRN2A") print $0}') \
+|sort -k2,2 > $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS_A.tsv
+
+##group 2 A ou B ou D
 cat <(cut -f1,2,3,5 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,4 |gawk '{if ($4~"Traes") print $0}') \
 <(cut -f1,2,3,5 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,5 |gawk '{if ($4~"Traes") print $0}') \
 <(cut -f1,2,3,5 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,6 |gawk '{if ($4~"Traes") print $0}') \
@@ -85,7 +88,7 @@ cat <(cut -f1,2,3,5 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t'
 <(cut -f1,2,3,5 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,12 |gawk '{if ($4~"Traes") print $0}') \
 <(cut -f1,2,3,5 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,13 |gawk '{if ($4~"Traes") print $0}') |sort -k2,2 > $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS_B.tsv
 
-##sous-genome D
+##group 3 A ou B ou D
 cat <(cut -f1,2,3,6 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,4 |gawk '{if ($4~"Traes") print $0}') \
 <(cut -f1,2,3,6 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,5 |gawk '{if ($4~"Traes") print $0}') \
 <(cut -f1,2,3,6 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t' |cut -f1,2,3,6 |gawk '{if ($4~"Traes") print $0}') \
@@ -112,6 +115,8 @@ join -t$'\t' -1 2 -2 1 <(sort -k2,2 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS_
 
 
 # Stat rapides:
+#cut -f1,2,4 TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS_list.tsv |gawk '{ print $1,$2,substr($3,8,2) }' |sort |uniq -c |gawk '{print $1,$2,$3,$4}' > TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS_list_ABD_grouped.tsv
+
 #cut -f4 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS_KnetMiner_functionnal_annotation.tsv |sort -n |uniq -c
 # 581 genes /834 seraient deletes pour 2 ou 3 sous-genomes a la fois
 # 253 genes /834 n'appartiennent pas a un groupe de genes homeologues et ne seraient dons potentiellement pas deletes pour 2 ou 3 sous-genomes a la fois.

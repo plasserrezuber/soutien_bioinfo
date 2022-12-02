@@ -10,9 +10,10 @@ mkdir $OUTPUT
 # chr2D : 375144056..395621869
 
 # fichier: $OUTPUT/ROI_Renan.txt
-#chr2A   514748482   530569798
-#chr2B   454341715   468445368
-#chr2D   375144056   395621869
+# chr2A   515429526       531057475
+# chr2B   460671192       474547008
+# chr2D   388551251       408812882
+
 
 
 ##### alignement bwa des isbp refseqv1 sur Renan
@@ -65,15 +66,15 @@ do
 done < $OUTPUT/ROI_Renan_210719.txt 
 
 fgrep -w 'gene' $OUTPUT/TaeRenan_refseq_v2.0_genes_ROI_RECQ4.gff3 |gawk -v FS='ID=' '{print $2}' |tr ';' '\t' |gawk -v OFS='\t' 'NF>0 {for (i=1;i<=NF;i++) { if ($i~"previous_id") print $1,$i } }' \
-|sed 's/previous_id=//' |cut -d',' -f1 > $OUTPUT/liste_TaeRenan_refseq_v2.0_REFSEQV2_geneID_ROI_RECQ4.txt
+|sed 's/previous_id=//' |sed 's/'$'\t''.*,/'$'\t''/' > $OUTPUT/liste_TaeRenan_refseq_v2.0_REFSEQV2_geneID_ROI_RECQ4.txt
 
 
-join -t$'\t' -1 2 -2 2 <(sort -k2,2 /storage/groups/gdec/shared/triticum_aestivum/chinese_spring/iwgsc/REFSEQV2/v2.1/annotation/genemodels_v200916/IWGSC_refseqv2.1_annotation_200916_IDmaping.csv) \
-<(sort -k2,2 $OUTPUT/liste_TaeRenan_refseq_v2.0_REFSEQV2_geneID_ROI_RECQ4.txt) \
-|sed 's/02G/01G/' |gawk -v OFS='\t' '{print $1,$2".1",$3}' > $OUTPUT/liste_REFSEQV2_REFSEQV1_TaeRenan_refseq_v2.0_geneID_ROI_RECQ4.txt
+join -t$'\t' -1 2 -2 2 <(sort -k2,2 $OUTPUT/liste_TaeRenan_refseq_v2.0_REFSEQV2_geneID_ROI_RECQ4.txt) \
+<(sort -k2,2 /storage/groups/gdec/shared/triticum_aestivum/chinese_spring/iwgsc/REFSEQV2/v2.1/annotation/genemodels_v200916/IWGSC_refseqv2.1_annotation_200916_IDmaping.csv) \
+|sed 's/02G/01G/' |gawk -v OFS='\t' '{print $1,$2,$3".1"}' > $OUTPUT/liste_REFSEQV2_REFSEQV1_TaeRenan_refseq_v2.0_geneID_ROI_RECQ4.txt
 
-cat <(join -t$'\t' -1 2 -2 1 <(sort -k2,2 $OUTPUT/liste_REFSEQV2_REFSEQV1_TaeRenan_refseq_v2.0_geneID_ROI_RECQ4.txt) \
+cat <(join -t$'\t' -1 3 -2 1 <(sort -k3,3 $OUTPUT/liste_REFSEQV2_REFSEQV1_TaeRenan_refseq_v2.0_geneID_ROI_RECQ4.txt) \
 <(sort -k1,1 /storage/groups/gdec/shared/triticum_aestivum/chinese_spring/iwgsc/REFSEQV1/annotation/v1.0/FunctionalAnnotation_v1/iwgsc_refseqv1.0_FunctionalAnnotation_v1__HCgenes_v1.0.TAB)) \
-<(join -t$'\t' -1 2 -2 1 <(sort -k2,2 $OUTPUT/liste_REFSEQV2_REFSEQV1_TaeRenan_refseq_v2.0_geneID_ROI_RECQ4.txt) \
+<(join -t$'\t' -1 3 -2 1 <(sort -k3,3 $OUTPUT/liste_REFSEQV2_REFSEQV1_TaeRenan_refseq_v2.0_geneID_ROI_RECQ4.txt) \
 <(sort -k1,1 /storage/groups/gdec/shared/triticum_aestivum/chinese_spring/iwgsc/REFSEQV1/annotation/v1.0/FunctionalAnnotation_v1/iwgsc_refseqv1.0_FunctionalAnnotation_v1__LCgenes_v1.0.TAB)) \
 > $OUTPUT/functional_annotation_REFSEQV1_TaeRenan_refseq_v2.0_ROI_RECQ4.txt

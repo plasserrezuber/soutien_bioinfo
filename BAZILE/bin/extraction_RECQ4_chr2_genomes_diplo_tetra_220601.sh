@@ -14,22 +14,22 @@ mkdir $OUTPUT
 ## DEMANDE: Recup des sequences des genes RECQ4 de REFSEQV1 suivant chez les genomes diplo et tetra: TraesCS2A02G304900 TraesCS2B02G321700 TraesCS2D02G303500
 
 ###########################################################################################################################################
-# Aet=/home/napapon/Seq/Aegilops_tauschii/Aegilops_tauschii.Aet_v4.0.dna.allchromosome.fa
-# Tru=/home/napapon/Seq/Triticum_urartu/WheatTu.genome.fasta
-# Zavv2=/home/napapon/Seq/Triticum_dicoccoides/TrdicZavitanv2.0.fasta
-# Tdur=/home/napapon/Seq/Triticum_durum/Svevo.v1.0.april_2019.StdChrom.fna
-# Jagger=/home/napapon/Seq/Jagger/Fasta/Jagger_Genome.fasta
-# Julius=/home/napapon/Seq/Julius/Fasta/Julius_Genome.fasta
-# Stanley=/home/napapon/Seq/Stanley/Fasta/Stanley_Genome.fasta
-# Mace=/home/napapon/Seq/Mace/Fasta/Mace_Genome.fasta
-# SY_Mattis=/home/napapon/Seq/SY_Mattis/Fasta/SY_Mattis_Genome.fasta
-# ArinaLrFor=/home/napapon/Seq/ArinaLrFor/Fasta/ArinaLrFor_Genome.fasta
-# Spelt=/home/napapon/Seq/Spelt/Fasta/Spelt_Genome.fasta
-# Lancer=/home/napapon/Seq/Lancer/Fasta/Lancer_Genome.fasta
-# Landmark=/home/napapon/Seq/Landmark/Fasta/Landmark_Genome.fasta
-# Norin61=/home/napapon/Seq/Norin61/Fasta/Norin61_Genome.fasta
-# Renan=/home/napapon/Seq/Renan/Renan_v13_v2.pseudo.v2.fa
-# TraesTib=/home/napapon/Seq/Triticum_aestivum_subsp_tibetan/Triticum_aestivum_subsp_tibeticum_Zang1817
+# Aet   /home/napapon/Seq/Aegilops_tauschii/Aegilops_tauschii.Aet_v4.0.dna.allchromosome.fa
+# Tru   /home/napapon/Seq/Triticum_urartu/WheatTu.genome.fasta
+# Zavv2 /home/napapon/Seq/Triticum_dicoccoides/TrdicZavitanv2.0.fasta
+# Tdur  /home/napapon/Seq/Triticum_durum/Svevo.v1.0.april_2019.StdChrom.fna
+# Jagger    /home/napapon/Seq/Jagger/Fasta/Jagger_Genome.fasta
+# Julius    /home/napapon/Seq/Julius/Fasta/Julius_Genome.fasta
+# Stanley   /home/napapon/Seq/Stanley/Fasta/Stanley_Genome.fasta
+# Mace  /home/napapon/Seq/Mace/Fasta/Mace_Genome.fasta
+# SY_Mattis /home/napapon/Seq/SY_Mattis/Fasta/SY_Mattis_Genome.fasta
+# ArinaLrFor    /home/napapon/Seq/ArinaLrFor/Fasta/ArinaLrFor_Genome.fasta
+# Spelt /home/napapon/Seq/Spelt/Fasta/Spelt_Genome.fasta
+# Lancer    /home/napapon/Seq/Lancer/Fasta/Lancer_Genome.fasta
+# Landmark  /home/napapon/Seq/Landmark/Fasta/Landmark_Genome.fasta
+# Norin61   /home/napapon/Seq/Norin61/Fasta/Norin61_Genome.fasta
+# Renan /home/napapon/Seq/Renan/Renan_v13_v2.pseudo.v2.fa
+# TraesTib  /home/napapon/Seq/Triticum_aestivum_subsp_tibetan/Triticum_aestivum_subsp_tibeticum_Zang1817
 ###########################################################################################################################################
 
 ###########################################################################################################################################
@@ -79,27 +79,26 @@ egrep 'TraesCS2A02G304900|TraesCS2B02G321700|TraesCS2D02G303500' /home/napapon/r
 gawk '{print $0"\t"$5 }' $OUTPUT/gmap_RECQ4_CDS.1_REFSEQV1_vs_genomes_diplo_tetra.bed |cut -d'/' -f1-6,10 |sed -E 's/a\t\//a\t/' |sed 's/ID=//' |sed s'/lcl|//' \
 > $OUTPUT/tmp && mv $OUTPUT/tmp $OUTPUT/gmap_RECQ4_CDS.1_REFSEQV1_vs_genomes_diplo_tetra.bed
 
-# module load bedtools/2.27.1 
-# while read line;
-# do
-#     genome=$(echo $line |cut -d' ' -f6)
-#     path=$(echo $line |cut -d' ' -f5)
-#     gene_REFSEQV1=$(echo $line |cut -d' ' -f4)
-
-#     revcom.pl <(bedtools getfasta -name+ -bed <(grep $genome $OUTPUT/gmap_RECQ4_CDS.1_REFSEQV1_vs_genomes_diplo_tetra.bed |fgrep ${gene_REFSEQV1}) -fi $path) \
-#     > $OUTPUT/RECQ4_${genome}_ortho_de_${gene_REFSEQV1}.fasta
-
-# done < $OUTPUT/gmap_RECQ4_CDS.1_REFSEQV1_vs_genomes_diplo_tetra.bed
-
-
-ml gdecTools/1.1 triannotTools/1.2 bioperl/1.7.0_rc5
-
+module load gcc/4.8.4 triannotTools/1.2 gdecTools/1.1 bioperl/1.7.0_rc5 bedtools/2.27.1
 while read line;
 do
     genome=$(echo $line |cut -d' ' -f6)
     path=$(echo $line |cut -d' ' -f5)
     gene_REFSEQV1=$(echo $line |cut -d' ' -f4)
 
-    /home/palasser/bin/gff2fasta.pl $OUTPUT/${genome} <(grep ${gene_REFSEQV1} $OUTPUT/gmap_RECQ4_CDS.1_REFSEQV1_vs_${genome}.gff3) $OUTPUT/RECQ4_${genome}_ortho_de_${gene_REFSEQV1}
+    revcom.pl <(bedtools getfasta -name+ -bed <(grep $genome $OUTPUT/gmap_RECQ4_CDS.1_REFSEQV1_vs_genomes_diplo_tetra.bed |fgrep ${gene_REFSEQV1}) -fi $path) \
+    > $OUTPUT/RECQ4_${genome}_ortho_de_${gene_REFSEQV1}_gene_startTOstop.fasta
+
+done < $OUTPUT/gmap_RECQ4_CDS.1_REFSEQV1_vs_genomes_diplo_tetra.bed
+
+ml gcc/8.1.0 cufflinks/2.2.1
+sed -i s'/lcl|//' gmap_RECQ4_CDS.1_REFSEQV1_vs_Triticum_dicoccoides.gff3
+while read line;
+do
+    genome=$(echo $line |cut -d' ' -f6)
+    path=$(echo $line |cut -d' ' -f5)
+    gene_REFSEQV1=$(echo $line |cut -d' ' -f4)
+
+    gffread <(grep ${gene_REFSEQV1} $OUTPUT/gmap_RECQ4_CDS.1_REFSEQV1_vs_${genome}.gff3) -g ${path} -x $OUTPUT/RECQ4_${genome}_ortho_de_${gene_REFSEQV1}_cds.fasta -y $OUTPUT/RECQ4_${genome}_ortho_de_${gene_REFSEQV1}_pep.fasta
 
 done < $OUTPUT/gmap_RECQ4_CDS.1_REFSEQV1_vs_genomes_diplo_tetra.bed
