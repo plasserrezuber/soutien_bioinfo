@@ -1,6 +1,7 @@
 
 library(data.table)
 library(tidyverse)
+library(broom)
 
 setwd('Y:/ANALYSES/data/storage_proteins_chr1/WATIL_Nezha_stageM2')
 dirout='Y:/ANALYSES/results/storage_proteins_chr1/WATIL_Nezha_stageM2/'
@@ -12,14 +13,18 @@ colnames(seq_length)=c("name","length")
 cds_coord=read_tsv("18genes_consensus_vs_TaeRenan_coding_part_coord.txt", col_names = F)
 colnames(cds_coord)=c("name","start","stop")
 
-vcf_vector = list.files("Y:/ANALYSES/data/STORAGE_PROT_CHR1/WATIL_Nezha_stageM2", pattern='_aling.fasta.vcf')
+list_indiv=read_tsv("list_indiv_Exige_Glu_PacBio.txt", col_names = F)
+list_indiv=rbind("REF","ALT",list_indiv)
+colnames(list_indiv)="sample"
+
+vcf_vector = list.files("Y:/ANALYSES/data/storage_proteins_chr1/WATIL_Nezha_stageM2", pattern='_aling.fasta.vcf')
 
 ###debut de boucle sur les fichiers vcf
 for (f in 1:length(vcf_vector)) {
   vcf = fread(vcf_vector[f])
+  vcf=vcf%>%select("POS","REF","ALT",contains("cluster-0_ReadCount"))
   
   Tvcf=t(as.matrix(vcf))
-  Tvcf=Tvcf[c(-1,-3,-6,-7,-8,-9),]
   Tvcf=cbind(rownames(Tvcf),Tvcf)
   Tvcf=data.frame(Tvcf)
   
@@ -35,35 +40,76 @@ for (f in 1:length(vcf_vector)) {
   #Tvcf=Tvcf%>%mutate(across(starts_with("pos"), ~str_replace(.,"/\\d:\\d","")))
   
   Tvcf=as.matrix(Tvcf)
-  Tvcf=gsub(pattern = "/[0-9]:1",replacement = "",Tvcf)
-  freq_all=apply(Tvcf[c(-1,-2),-1], MARGIN=2, table)
-  POS=names(freq_all)
+  Tvcf=gsub(pattern = "/[0-9]*:1",replacement = "",Tvcf)
+  Tvcf=gsub(pattern = "[.]/[.]",replacement = NA, Tvcf)
   
-  #recupe nom gene en cours
+  #recupe nom gene en cours, longueur amplicon en cours
   nom=sub('\\_aling.fasta.vcf$', '',vcf_vector[f])
   nom=str_replace(nom, 'pbaa_','')
-  
   length_amplicon=as.numeric(seq_length[seq_length$name==nom,2])
+
+
+  ##############################################################
+  ### traitement pour export table complete (code 0/1/2) pour les 18 genes codant les glutenines
   
+  ## pour etre sur que la liste des indiv soit les memes pour chaque gene et faire un cbind ensuite.
+  Tvcf=as_tibble(Tvcf)
+  Tvcf_GENO=left_join(list_indiv,Tvcf, by="sample")
+  
+  colnames(Tvcf_GENO)=gsub(pattern="pos", replacement=nom,colnames(Tvcf_GENO))
+  
+  if (f==1) {table_GENO=Tvcf_GENO}
+  if (f!=1) {table_GENO=cbind(table_GENO, Tvcf_GENO[,-1])}
+  
+  
+  ##############################################################
+  ## Calcul des frequences alleliques et pourcentage NA
+  
+  freq_allelic=Tvcf_GENO%>%filter(sample!="REF" & sample!="ALT")%>%select(-sample)%>%
+    pivot_longer(everything(), names_to = "pos", values_to="allele")%>%
+    group_by(pos,allele)%>%
+    summarise(n=n())%>%
+    mutate(freq_perc=n/nrow(Tvcf_GENO)*100)%>%
+    mutate(pos=str_replace(pos, "pos", nom))
+  
+  MAF_NA=left_join(freq_allelic%>%group_by(pos)%>%summarise(MAF=min(freq_perc)),
+                   freq_allelic%>%filter(is.na(allele))%>%select(pos,freq_perc)%>%rename(NAperc=freq_perc), by="pos")
+  
+  if (f==1) {table_MAF_NA=MAF_NA}
+  if (f!=1) {table_MAF_NA=rbind(table_MAF_NA, MAF_NA)}
 
   ###########################################################
   #CALCUL HAPLOTYPES/amplicon entier
   ###########################################################
   
-  Tvcf_nuc=as_tibble(Tvcf)
+  Tvcf_nuc=Tvcf
   for (i in 2:dim(Tvcf_nuc)[2]) {
     
     #remplacement allele maj
-    Tvcf_nuc[Tvcf_nuc[,i]=="0",i]=Tvcf_nuc[1,i]
+    Tvcf_nuc[Tvcf_nuc[,i]=="0" & !is.na(Tvcf_nuc[,i]),i]=Tvcf_nuc[1,i]
     
     #remplacement allele min
     #recuperation de la liste des alleles minoritaires possibles pour la position en cours
     mut_min_vec=unlist(strsplit(as.character(Tvcf_nuc[2,i]),","))
    
     for (k in 1:length(mut_min_vec)) {
-      Tvcf_nuc[Tvcf_nuc[,i]==k,i]=mut_min_vec[k]
+      Tvcf_nuc[Tvcf_nuc[,i]==k & !is.na(Tvcf_nuc[,i]),i]=mut_min_vec[k]
     }
   }
+  
+  ##############################################################
+  ### traitement pour export table complete (code ATGC) pour les 18 genes codant les glutenines
+  
+  ## pour etre sur que la liste des indiv soit les memes pour chaque gene et faire un cbind ensuite.
+  Tvcf_GENO_nuc=left_join(list_indiv,Tvcf_nuc, by="sample")
+  
+  colnames(Tvcf_GENO_nuc)=gsub(pattern="pos", replacement=nom,colnames(Tvcf_GENO_nuc))
+  
+  if (f==1) {table_GENO_nuc=Tvcf_GENO_nuc}
+  if (f!=1) {table_GENO_nuc=cbind(table_GENO_nuc, Tvcf_GENO_nuc[,-1])}
+
+  
+  
   #mise en forme: supression lignes 1 et 2, concatenation(unite) des colonnes par ligne
   Tvcf_nuc=Tvcf_nuc[c(-1,-2),]%>%unite("haplo", 2:ncol(Tvcf_nuc), sep="")
   stat_halpo=as.data.frame(table(Tvcf_nuc$haplo))
@@ -100,10 +146,15 @@ for (f in 1:length(vcf_vector)) {
     pos_list=paste("pos_",pos_list$POS,sep="")
     #Tvcf partie codante
     Tvcf_cds=Tvcf[,c("sample",pos_list)]
-  } else {print(c("no nuc var", nom, f))
-    Tvcf_cds=data.frame(Tvcf[,1])}
+  } else {print(c("no nucleotidic variability in CDS", nom, f))
+    Tvcf_cds=data.frame(Tvcf[,1])
+    nbSNP_per1kb_cds=c(nom, length_cds, ncol(Tvcf_cds)-1, (ncol(Tvcf_cds)-1)/length_cds*1000)
+    }
   
   Tvcf_nuc_cds=as_tibble(Tvcf_cds)
+  
+  
+  # if il y a au moins un polymorphisme dans la cds
   if (dim(Tvcf_nuc_cds)[2]>=2) {
     for (i in 2:dim(Tvcf_nuc_cds)[2]) {
     
@@ -132,17 +183,19 @@ for (f in 1:length(vcf_vector)) {
     
     nbSNP_per1kb_cds=c(nom, length_cds, ncol(Tvcf_cds)-1, round((ncol(Tvcf_cds)-1)/length_cds*1000, 2))
   
+  } # fin de if il y a au moins un polymorphisme
   
-    if (f==1) { table_nbSNP_per1kb_cds=nbSNP_per1kb_cds }
-    if (f!=1) { table_nbSNP_per1kb_cds=rbind(table_nbSNP_per1kb_cds, nbSNP_per1kb_cds)
-    colnames(table_nbSNP_per1kb_cds)=c("name","cds_length", "cds_mut_number","cds_perKb_mut_rate")}
-    
-  }
+  
+  if (f==1) { table_nbSNP_per1kb_cds=nbSNP_per1kb_cds }
+  if (f!=1) { table_nbSNP_per1kb_cds=rbind(table_nbSNP_per1kb_cds, nbSNP_per1kb_cds)}
   
   
 }    ####fin boucle sur les fichiers
 
+colnames(table_nbSNP_per1kb_cds)=c("name","cds_length", "cds_mut_number","cds_perKb_mut_rate")
 table_nbSNP_perKb=left_join(as_tibble(table_nbSNP_per1kb),as_tibble(table_nbSNP_per1kb_cds), by="name")
 
 write_tsv(table_nbSNP_perKb,paste(dirout,"table_nbSNP_perKb.tsv",sep=""))
 
+write_tsv(table_GENO,"Y:/ANALYSES/data/storage_proteins_chr1/Exige_FSOV/GENO_PacBio_94indiv_18_glutenin_Exige.tsv")
+write_tsv(table_GENO_nuc,"Y:/ANALYSES/data/storage_proteins_chr1/Exige_FSOV/GENO_nuc_PacBio_94indiv_18_glutenin_Exige.tsv")
