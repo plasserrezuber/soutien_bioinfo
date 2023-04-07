@@ -19,6 +19,11 @@ colnames(list_indiv)="sample"
 
 vcf_vector = list.files("Y:/ANALYSES/data/storage_proteins_chr1/WATIL_Nezha_stageM2", pattern='_aling.fasta.vcf')
 
+###NB: sans option de consensus, l'outil msa2vcf qui génère les vcf à partir d'un alignement multiple considere comme
+# chrUn la longueur totale de l'alignement multiple
+# les coordonnees sont celles sur le chrUn
+# l'allele REF est l'allele majoritaire (="0"), les alleles ALT (1, 2, 3, etc) sont les alleles minoritaires
+
 ###debut de boucle sur les fichiers vcf
 for (f in 1:length(vcf_vector)) {
   vcf = fread(vcf_vector[f])
@@ -82,13 +87,15 @@ for (f in 1:length(vcf_vector)) {
   #CALCUL HAPLOTYPES/amplicon entier
   ###########################################################
   
+  ## transformation matrice geno codage chiffres en codage nucleotides
+  
   Tvcf_nuc=Tvcf
   for (i in 2:dim(Tvcf_nuc)[2]) {
     
-    #remplacement allele maj
+    #remplacement allele maj=REF
     Tvcf_nuc[Tvcf_nuc[,i]=="0" & !is.na(Tvcf_nuc[,i]),i]=Tvcf_nuc[1,i]
     
-    #remplacement allele min
+    #remplacement alleles min=ALT par 
     #recuperation de la liste des alleles minoritaires possibles pour la position en cours
     mut_min_vec=unlist(strsplit(as.character(Tvcf_nuc[2,i]),","))
    
@@ -114,6 +121,9 @@ for (f in 1:length(vcf_vector)) {
   Tvcf_nuc=Tvcf_nuc[c(-1,-2),]%>%unite("haplo", 2:ncol(Tvcf_nuc), sep="")
   stat_halpo=as.data.frame(table(Tvcf_nuc$haplo))
   stat_halpo$name=paste("haplo",row.names(stat_halpo),sep="_")
+  
+  print(nom)
+  print(sum(stat_halpo$Freq))
   
   ##############################################################
   #EXPORT haplotypes
@@ -172,6 +182,9 @@ for (f in 1:length(vcf_vector)) {
     Tvcf_nuc_cds=Tvcf_nuc_cds[c(-1,-2),]%>%unite("haplo", 2:ncol(Tvcf_nuc_cds), sep="")
     stat_halpo_cds=as.data.frame(table(Tvcf_nuc_cds$haplo))
     stat_halpo_cds$name=paste("haplo",row.names(stat_halpo_cds),sep="_")
+    
+    print(nom)
+    print(sum(stat_halpo$Freq))
     
     ##############################################################
     #EXPORT haplotypes
