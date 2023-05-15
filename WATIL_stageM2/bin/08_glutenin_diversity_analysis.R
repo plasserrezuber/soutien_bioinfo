@@ -1,6 +1,7 @@
 
 library(data.table)
 library(tidyverse)
+library(plyr)
 library(broom)
 
 setwd('Y:/ANALYSES/data/storage_proteins_chr1/WATIL_Nezha_stageM2')
@@ -13,7 +14,7 @@ colnames(seq_length)=c("name","length")
 cds_coord=read_tsv("18genes_consensus_vs_TaeRenan_coding_part_coord.txt", col_names = F)
 colnames(cds_coord)=c("name","start","stop")
 
-list_indiv=read_tsv("list_indiv_Exige_Glu_PacBio.txt", col_names = F)
+indiv=read_tsv("list_indiv_Exige_Glu_PacBio.txt", col_names = F)
 list_indiv=rbind("REF","ALT",list_indiv)
 colnames(list_indiv)="sample"
 
@@ -27,6 +28,27 @@ vcf_vector = list.files("Y:/ANALYSES/data/storage_proteins_chr1/WATIL_Nezha_stag
 ###debut de boucle sur les fichiers vcf
 for (f in 1:length(vcf_vector)) {
   vcf = fread(vcf_vector[f])
+#   vcf=vcf%>%
+#     select("#CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT",contains("cluster-0_ReadCount"))%>%
+#     rename_at(vars(starts_with("sample")), funs(str_sub(.,8,13)))
+#   
+#   #recupe nom gene en cours et longueur amplicon en cours
+#   nom=sub('\\_aling.fasta.vcf$', '',vcf_vector[f])
+#   nom=str_replace(nom, 'pbaa_','')
+#   length_amplicon=as.numeric(seq_length[seq_length$name==nom,2])
+#   
+#   vcf$POS=paste(nom,vcf$POS, sep="_")
+#   
+#   #liste de colonne pour concatener les vcf
+#   listcol=as.vector(c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT",as_vector(indiv)))
+#   tibcol=as_tibble(matrix(nrow=1,ncol=length(listcol), dimnames=list(1,listcol)))
+#   
+#   if (f==1) {table_vcf=rbind.fill(tibcol, vcf)[-1,]}
+#   if (f!=1) {table_vcf=rbind.fill(table_vcf, vcf) }
+# 
+#   fwrite(table_vcf,"PacBio_94indiv_18_glutenin_Exige.vcf", sep="\t")
+# }
+  
   vcf=vcf%>%select("POS","REF","ALT",contains("cluster-0_ReadCount"))
   
   Tvcf=t(as.matrix(vcf))
@@ -48,11 +70,6 @@ for (f in 1:length(vcf_vector)) {
   Tvcf=gsub(pattern = "/[0-9]*:1",replacement = "",Tvcf)
   Tvcf=gsub(pattern = "[.]/[.]",replacement = NA, Tvcf)
   
-  #recupe nom gene en cours, longueur amplicon en cours
-  nom=sub('\\_aling.fasta.vcf$', '',vcf_vector[f])
-  nom=str_replace(nom, 'pbaa_','')
-  length_amplicon=as.numeric(seq_length[seq_length$name==nom,2])
-
 
   ##############################################################
   ### traitement pour export table complete (code 0/1/2) pour les 18 genes codant les glutenines
