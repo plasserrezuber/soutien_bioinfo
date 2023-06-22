@@ -84,6 +84,8 @@ grep -v -P '##sequence-region *'$chrom':[1-9]' $OUTPUT/Lo7_RefSeq_${chr}_clariTE
 |gawk -v chr=$chrom -v end=$endchrom 'BEGIN{FS="\t";OFS="\t"} { if ($0~"##sequence-region") $0="##sequence-region\t"chr"\t1\t"end; print }' \
 |sed -E 's/'$chrom':[0-9]*-[0-9]*/'$chrom'/' |sed -E 's/Compo:.* (Family)/\1/' | sed -E 's/Post:.* (Status)/\1/' > $OUTPUT/Lo7_RefSeq_${chr}_clariTE_friendly.gff3
 
+sed -i 's/=TraesRe_chr/=SecerLo7_chr/g' Lo7_RefSeq_${chr}_clariTE_friendly.gff3
+
 echo "Check clariTE_gff3 validity for ${chrom}"
 gt gff3validator $OUTPUT/Lo7_RefSeq_${chr}_clariTE_friendly.gff3
 

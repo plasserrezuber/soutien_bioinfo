@@ -12,7 +12,7 @@ module load gcc/4.8.4 triannotTools/1.2 gdecTools/1.1 RepeatMasker
 OUTPUT='/home/palasser/projects/soutien_bioinfo/BOUGUENNEC/results/annotTE_Lo7/'$1
 SCRATCHDIR='/storage/scratch/'$USER'/Lo7/'$1
 
-mkdir -p -m 750 $SOUTPUT
+mkdir -p -m 750 $OUTPUT
 mkdir -p -m 750 $SCRATCHDIR
 cd $SCRATCHDIR
 

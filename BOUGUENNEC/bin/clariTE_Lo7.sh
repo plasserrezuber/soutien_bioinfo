@@ -13,7 +13,7 @@ module load gcc/4.8.4 triannotTools/1.2 gdecTools/1.1 bioperl/1.7.0_rc5
 DATABANK='/storage/groups/gdec/triannot/tools/ClariTE/clariTE_1.0'
 OUTPUT='/home/palasser/projects/soutien_bioinfo/BOUGUENNEC/results/annotTE_Lo7/'$1
 
-mkdir -p -m 750 $SOUTPUT
+mkdir -p -m 750 $OUTPUT
 cd $OUTPUT
 
 files=($(find $OUTPUT/$1*.fa))
