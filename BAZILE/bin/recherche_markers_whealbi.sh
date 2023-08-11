@@ -34,7 +34,7 @@ blastn -num_threads 8 -dust no -outfmt 6 -word_size 5 \
 -db /storage/groups/gdec/shared/triticum_aestivum/chinese_spring/iwgsc/REFSEQV1/fasta/IWGSC_CSRefSeqv1.fasta \
 -out /home/palasser/projects/soutien_bioinfo/BAZILE/sequences_ABD_gene_RECQ4/variation_RECQ4_2B.blastn
 
-# position su snp dans geneTraesCS2B02G321700 chr2B:458849313..458858559 (- strand)  = chr2B:458854556
+# position du snp dans gene TraesCS2B02G321700 chr2B:458849313..458858559 (- strand)  = chr2B:458854556
 # Info snp:Project: http://wheatgenomics.plantpath.ksu.edu/1000EC/ 
 # Name: chr2B_scaffold13731-2_13318540
 # Type: SNV

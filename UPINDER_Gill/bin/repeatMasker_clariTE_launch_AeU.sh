@@ -17,9 +17,8 @@ GENOME='/home/palasser/projects/soutien_bioinfo/UPINDER_Gill/data/FINAL_AeU_asm.
 OUTPUT='/home/palasser/projects/soutien_bioinfo/UPINDER_Gill/results/annotTE_AeU'
 
 ####################################################################################
-#chromosomes=("1U" "2U" "3U" "4U" "5U" "6U" "7U" "Un")
-#chr=${chromosomes[$SLURM_ARRAY_TASK_ID]}
-chr='1U'
+chromosomes=("1U" "2U" "3U" "4U" "5U" "6U" "7U" "Un")
+chr=${chromosomes[$SLURM_ARRAY_TASK_ID]}
 chrom_prefix='Chr'
 chrom=${chrom_prefix}${chr}
 mkdir -p $OUTPUT/${chrom}
@@ -27,30 +26,30 @@ cd $OUTPUT/${chrom}
 
 ###### Chunks
 ## create one fasta per chromosome
-# if [ $chrom = "ChrUn" ];
-#     then 
-#     gawk -v seq='ptg' 'BEGIN { RS=">" } { if ($0 ~ seq) print RS "ChrUn:"$0 }' ${GENOME} > $OUTPUT/${chrom}/${chrom}.fasta
-# else
-#     samtools faidx ${GENOME} $chrom > $OUTPUT/${chrom}/${chrom}.fasta
-# fi
+if [ $chrom = "ChrUn" ];
+    then 
+    gawk -v seq='ptg' 'BEGIN { RS=">" } { if ($0 ~ seq) print RS "ChrUn:"$0 }' ${GENOME} > $OUTPUT/${chrom}/${chrom}.fasta
+else
+    samtools faidx ${GENOME} $chrom > $OUTPUT/${chrom}/${chrom}.fasta
+fi
 
 ##other methods
 ##gawk -v seq='chr'$chrom 'BEGIN { RS=">" } { if ($0 ~ seq) print RS $0 }' ${GENOME} > $OUTPUT/${chrom}/${chrom}.fasta
 ##echo $chrom > chrom.txt; seqtk subseq ${GENOME} chrom.txt > $OUTPUT/${chrom}/${chrom}.fasta
 
-# samtools faidx $OUTPUT/$chrom/${chrom}.fasta
-# bedtools makewindows -g $OUTPUT/${chrom}/${chrom}.fasta.fai -w 10000000 > $OUTPUT/${chrom}/${chrom}.windows.bed
+samtools faidx $OUTPUT/$chrom/${chrom}.fasta
+bedtools makewindows -g $OUTPUT/${chrom}/${chrom}.fasta.fai -w 10000000 > $OUTPUT/${chrom}/${chrom}.windows.bed
 
-# bedtools getfasta -bed $OUTPUT/${chrom}/${chrom}.windows.bed -fi $OUTPUT/${chrom}/${chrom}.fasta > $OUTPUT/${chrom}/${chrom}.windows.fasta
-# fastaexplode -f $OUTPUT/${chrom}/${chrom}.windows.fasta -d $OUTPUT/${chrom}
+bedtools getfasta -bed $OUTPUT/${chrom}/${chrom}.windows.bed -fi $OUTPUT/${chrom}/${chrom}.fasta > $OUTPUT/${chrom}/${chrom}.windows.fasta
+fastaexplode -f $OUTPUT/${chrom}/${chrom}.windows.fasta -d $OUTPUT/${chrom}
 
 files=($(find $OUTPUT/${chrom}/${chrom}*.fa))
 
 k=$((${#files[@]}-1))   #recupere le nb d'item dans la liste 'files'
 
 ###### RepeatMasker
-# RMjid=`sbatch --wait --parsable -J ${chr}_RM --array=0-${k}%20 /home/palasser/projects/soutien_bioinfo/UPINDER_Gill/bin/repeatMasker_AeU.sh ${chrom}`
-# echo "$RMjid : RepeatMasker on ${chrom}"
+RMjid=`sbatch --wait --parsable -J ${chr}_RM --array=0-${k}%20 /home/palasser/projects/soutien_bioinfo/UPINDER_Gill/bin/repeatMasker_AeU.sh ${chrom}`
+echo "$RMjid : RepeatMasker on ${chrom}"
 
 if [ $(find *.fa.out.xm |wc -l) = $(($k+1)) ];
     then echo ${chrom}": all RepeatMasker output files there";
@@ -63,8 +62,8 @@ fi
 
 ###### clariTE
 ## option `--wait` pour que le script principal attende la fin du job array clariTE avant cmd suivante
-#CLARITEjid=`sbatch --wait --parsable -J ${chr}_clariTE --dependency=afterok:$RMjid --array=0-$k%20 /home/palasser/projects/soutien_bioinfo/UPINDER_Gill/bin/clariTE_AeU.sh ${chrom}`
-CLARITEjid=`sbatch --wait --parsable -J ${chr}_clariTE --array=0-$k%20 /home/palasser/projects/soutien_bioinfo/UPINDER_Gill/bin/clariTE_AeU.sh ${chrom}`
+CLARITEjid=`sbatch --wait --parsable -J ${chr}_clariTE --dependency=afterok:$RMjid --array=0-$k%20 /home/palasser/projects/soutien_bioinfo/UPINDER_Gill/bin/clariTE_AeU.sh ${chrom}`
+
 echo "$CLARITEjid : clariTE on ${chrom}"
 
 if [ $(find *.fa.out_anno.embl |wc -l) = $(($k+1)) ];

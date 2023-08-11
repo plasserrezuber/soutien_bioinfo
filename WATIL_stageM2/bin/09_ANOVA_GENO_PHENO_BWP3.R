@@ -3,11 +3,10 @@ library(tidyverse)
 library(FactoMineR)
 library(broom)
 library(ggplot2)
-library(nlme)
-library(lme4)
+
 
 ######################
-## solution (intermédaire entre GWAS et anova/lm
+## solution ("intermédaire" entre GWAS et anova/lm
 # pour faire des test d'asso quand pas beaucoup d'indiv: 
 # package sommmer, fonction mmer en mettant kinship comme part variable, snp effet fixes
 # vignettes/tuto en ligne: https://github.com/covaruber/sommer
@@ -66,27 +65,31 @@ g=g[,c("sample", colnames(g)[colnames(g)%in%marker_ok])]
 ### DATA STRUCTURE
 #s=read_tsv("wp3_4403ind_8741hap_k8_rep5_structure.txt", col_names = TRUE)
 
-ped=fread("exige_alixan_2020/2020_CSI_DRY/2020_CSI_DRY_filtered_pruned_recoded.ped", sep=" ", header=F)
-colnames(ped)[1:2]=c("variete","ERGE")
-
-ped=ped%>%select(-variete,-V3,-V4,-V5,-V6)
-ped=data.frame(ped)
-rownames(ped)=ped$ERGE
-ped=ped[,-1]
-ped=as.matrix(ped)
-
-
-for (i in 1:ncol(ped)) {
-  alleles=unique(ped[,i])
-  
-  for (j in 1:length(alleles)) {
-    
-    if (alleles[j]!=0)   { ped[ped[,i]==alleles[j],i]=j }
-    
-    # Replace NA by minor allele frequency computed as follow:
-    if (alleles[j]==0)   { ped[ped[,i]==alleles[j],i]=NA }
-  }
-}
+# ped=fread("exige_alixan_2020/2020_CSI_DRY/2020_CSI_DRY_filtered_pruned_recoded.ped", sep=" ", header=F)
+# colnames(ped)[1:2]=c("variete","ERGE")
+# 
+# ped=ped%>%select(-variete,-V3,-V4,-V5,-V6)
+# ped=data.frame(ped)
+# rownames(ped)=ped$ERGE
+# ped=ped[,-1]
+# ped=as.matrix(ped)
+# 
+# 
+# for (i in 1:ncol(ped)) {
+#   alleles=unique(ped[,i])
+#   
+#   for (j in 1:length(alleles)) {
+#     
+#     if (alleles[j]!=0)   { ped[ped[,i]==alleles[j],i]=j }
+#     
+#     # Replace NA by minor allele frequency computed as follow:
+#     if (alleles[j]==0)   { ped[ped[,i]==alleles[j],i]=NA }
+#   }
+# }
+# 
+# ped=data.frame(ped)
+# write_tsv(ped, "2020_BWP3_GENO_filtered_pruned_NUMERIC_without_NA_for_PCA.ped", col_names=F)
+ped=fread("2020_BWP3_GENO_filtered_pruned_NUMERIC_without_NA_for_PCA.ped", header=F)
 
 ped=data.frame(ped)
 
@@ -95,8 +98,6 @@ for (i in 1:ncol(ped)) {
   ped[is.na(ped[,i]),i]=mean(x =ped[,i], na.rm=T)
 }
 
-write_tsv(ped, "2020_BWP3_GENO_filtered_pruned_NUMERIC_without_NA_for_PCA.ped")
-
 acp<-CA(ped,graph = F)
 
 acpdf=data.frame(acp$row$coord)
@@ -104,10 +105,13 @@ acpdf=cbind(rownames(acpdf),acpdf)
 colnames(acpdf)[1]="ERGE"
 
 acpdf=left_join(acpdf, pheno_list, by="ERGE")
-acpdf[is.na(acpdf$origine),"origine"]="notEXIGE"
-acpdf[is.na(acpdf$date_obt),"date_obt"]="notEXIGE"
+acpdf[is.na(acpdf$origine),"origine"]="noGluSeq"
+acpdf[is.na(acpdf$date_obt),"date_obt"]="noGluSeq"
+
 
 pdf(paste(dirout,"AC_sur_BWP3_GENO_FSOV_Exige.pdf", sep="/"), width = 12, height = 8)
+par(mfrow=c(1,2))
+
 
 # eigen values barplot
 barplot(acp$eig[1:20,1], ylab="Eigen values")
@@ -115,18 +119,16 @@ barplot(acp$eig[1:20,1], ylab="Eigen values")
 barplot(acp$eig[1:20,2], ylab="% explianed variance")	
 
 ## Factorial plan graphs
-# Genotypes graph
-
 plot(acpdf[,"Dim.1"],	# Dim.1 is X axe
      acpdf[,"Dim.2"],	# Dim.2 is Y axe
-     main= "Genetic diversity",	# title
+     main= "BWP3 Genetic diversity",	# title
      pch=16,				# symbol circle
      cex=1,				# half size symbol
      asp=1,       # orthonormal basis
      xlab="Dim 1",
      ylab="Dim 2",
      col=c("red", "grey", "blue")[as.numeric(as.factor(acpdf$date_obt))],
-     sub="red=ancien - grey=notEXIGE - blue=recent"
+     sub="red=ancien  grey=noGluSeq  blue=recent"
 )
 abline(h=0,v=0,lty=2)			# adding lines
 
@@ -139,7 +141,7 @@ plot(acpdf[,"Dim.1"],	# Dim.1 is X axe
      xlab="Dim 1",
      ylab="Dim 2",
      col=c("red", "blue", "green", "black", "grey", "pink")[as.numeric(as.factor(acpdf$origine))],
-     sub="red=AmNord - blue=AmSud - green=Asie - black=Europe - grey=notEXIGE - pink=Océanie"
+     sub="red=AmN blue=AmS green=Asie black=Eu grey=noGluSeq pink=Océanie"
 )
 abline(h=0,v=0,lty=2)			# adding lines
 
@@ -153,7 +155,7 @@ plot(acpdf[,"Dim.1"],
      xlab="Dim 1",
      ylab="Dim 3",
      col=c("red", "blue", "green", "black", "grey", "pink")[as.numeric(as.factor(acpdf$origine))],
-     sub="red=AmNord - blue=AmSud - green=Asie - black=Europe - grey=notEXIGE - pink=Océanie"
+     sub="red=AmN blue=AmS green=Asie black=Eu grey=noGluSeq pink=Océanie"
 )
 abline(h=0,v=0,lty=2)			# adding lines
 
@@ -166,7 +168,7 @@ plot(acpdf[,"Dim.2"],
      xlab="Dim 2",
      ylab="Dim 3",
      col=c("red", "blue", "green", "black", "grey", "pink")[as.numeric(as.factor(acpdf$origine))],
-     sub="red=AmNord - blue=AmSud - green=Asie - black=Europe - grey=notEXIGE - pink=Océanie"
+     sub="red=AmN blue=AmS green=Asie black=Eu grey=noGluSeq pink=Océanie"
 )
 abline(h=0,v=0,lty=2)			# adding lines
 
@@ -227,6 +229,7 @@ row.names(phenoA_dry)=phenoA_dry$ERGE
 ### Correlations between phenotypic variables TTT=IRR
 ###############
 cormat=round(cor(phenoA_irr[,colphenoA], method="pearson", use = "complete.obs"),2)
+write_tsv(data.frame(cormat), paste(dirout, "matrice_corr_PHENO_Exige_Alixan_IRR.tab", sep="/"))
 
 ## replace upper triangle of the matrix by NAs
 #cormat[upper.tri(cormat, diag=TRUE)]=NA
@@ -257,14 +260,12 @@ colnames(resPCAdf)[1]="ERGE"
 
 resPCAdf=left_join(resPCAdf, pheno_list, by="ERGE")
 
-# eigen values barplot
-barplot(resPCA$eig[1:20,1], ylab="Eigen values")
+par(mfrow=c(1,2))
+
 # percentage of explained variance barplot
 barplot(resPCA$eig[1:20,2], ylab="% explianed variance")	
 
 ## Factorial plan graphs
-# Genotypes graph
-
 plot(resPCAdf[,"Dim.1"],	# Dim.1 is X axe
      resPCAdf[,"Dim.2"],	# Dim.2 is Y axe
      main= "PCA PHENO Alixan 2020 IRR",	# title
@@ -287,7 +288,7 @@ plot(resPCAdf[,"Dim.1"],	# Dim.1 is X axe
      xlab="Dim 1",
      ylab="Dim 2",
      col=c("red", "blue", "green", "black", "pink")[as.numeric(as.factor(resPCAdf$origine))],
-     sub="red=AmNord - blue=AmSud - green=Asie - black=Europe - pink=Océanie"
+     sub="red=AmNord  blue=AmSud  green=Asie  black=Europe  pink=Océanie"
 )
 abline(h=0,v=0,lty=2)			# adding lines
 
@@ -301,28 +302,18 @@ plot(resPCAdf[,"Dim.1"],
      xlab="Dim 1",
      ylab="Dim 3",
      col=c("red", "blue", "green", "black", "pink")[as.numeric(as.factor(resPCAdf$origine))],
-     sub="red=AmNord - blue=AmSud - green=Asie - black=Europe - pink=Océanie"
+     sub="red=AmNord  blue=AmSud  green=Asie  black=Europe  pink=Océanie"
 )
 abline(h=0,v=0,lty=2)			# adding lines
 
-plot(resPCAdf[,"Dim.2"],
-     resPCAdf[,"Dim.3"],
-     main= "PCA PHENO Alixan 2020 IRR",	# title
-     pch=16,				# symbol circle
-     cex=1,				# half size symbol
-     asp=1,       # orthonormal basis
-     xlab="Dim 2",
-     ylab="Dim 3",
-     col=c("red", "blue", "green", "black", "pink")[as.numeric(as.factor(resPCAdf$origine))],
-     sub="red=AmNord - blue=AmSud - green=Asie - black=Europe - pink=Océanie"
-)
-abline(h=0,v=0,lty=2)			# adding lines
+par(mfrow=c(1,1))
 
-plot.PCA(resPCA, choix="varcor", title="PCA PHENO Alixan 2020 IRR")
+plot.PCA(resPCA, choix="varcor", title="PCA PHENO Alixan 2020 IRR", cex=0.8)
 
 ### Correlations between phenotypic variables TTT=DRY
 ###############
 cormat=round(cor(phenoA_dry[,colphenoA], method="pearson", use = "complete.obs"),2)
+write_tsv(data.frame(cormat), paste(dirout, "matrice_corr_PHENO_Exige_Alixan_DRY.tab", sep="/"))
 
 ## replace upper triangle of the matrix by NAs
 #cormat[upper.tri(cormat, diag=TRUE)]=NA
@@ -351,14 +342,12 @@ colnames(resPCAdf)[1]="ERGE"
 
 resPCAdf=left_join(resPCAdf, pheno_list, by="ERGE")
 
-# eigen values barplot
-barplot(resPCA$eig[1:20,1], ylab="Eigen values")
+par(mfrow=c(1,2))
+
 # percentage of explained variance barplot
 barplot(resPCA$eig[1:20,2], ylab="% explianed variance")	
 
 ## Factorial plan graphs
-# Genotypes graph
-
 plot(resPCAdf[,"Dim.1"],	# Dim.1 is X axe
      resPCAdf[,"Dim.2"],	# Dim.2 is Y axe
      main= "PCA PHENO Alixan 2020 DRY",	# title
@@ -368,7 +357,7 @@ plot(resPCAdf[,"Dim.1"],	# Dim.1 is X axe
      xlab="Dim 1",
      ylab="Dim 2",
      col=c("red", "blue")[as.numeric(as.factor(resPCAdf$date_obt))],
-     sub=" blue=recent - red=ancien"
+     sub=" blue=recent  red=ancien"
 )
 abline(h=0,v=0,lty=2)			# adding lines
 
@@ -381,7 +370,7 @@ plot(resPCAdf[,"Dim.1"],	# Dim.1 is X axe
      xlab="Dim 1",
      ylab="Dim 2",
      col=c("red", "blue", "green", "black", "pink")[as.numeric(as.factor(resPCAdf$origine))],
-     sub="red=AmNord - blue=AmSud - green=Asie - black=Europe - pink=Océanie"
+     sub="red=AmNord  blue=AmSud  green=Asie  black=Europe  pink=Océanie"
 )
 abline(h=0,v=0,lty=2)			# adding lines
 
@@ -395,24 +384,12 @@ plot(resPCAdf[,"Dim.1"],
      xlab="Dim 1",
      ylab="Dim 3",
      col=c("red", "blue", "green", "black", "pink")[as.numeric(as.factor(resPCAdf$origine))],
-     sub="red=AmNord - blue=AmSud - green=Asie - black=Europe - pink=Océanie"
+     sub="red=AmNord  blue=AmSud  green=Asie  black=Europe  pink=Océanie"
 )
 abline(h=0,v=0,lty=2)			# adding lines
 
-plot(resPCAdf[,"Dim.2"],
-     resPCAdf[,"Dim.3"],
-     main= "PCA PHENO Alixan 2020 DRY",	# title
-     pch=16,				# symbol circle
-     cex=1,				# half size symbol
-     asp=1,       # orthonormal basis
-     xlab="Dim 2",
-     ylab="Dim 3",
-     col=c("red", "blue", "green", "black", "pink")[as.numeric(as.factor(resPCAdf$origine))],
-     sub="red=AmNord - blue=AmSud - green=Asie - black=Europe - pink=Océanie"
-)
-abline(h=0,v=0,lty=2)			# adding lines
-
-plot.PCA(resPCA, choix="varcor", title="PCA PHENO Alixan 2020 DRY")
+par(mfrow=c(1,1))
+plot.PCA(resPCA, choix="varcor", title="PCA PHENO Alixan 2020 DRY", cex=0.8)
 
 #################################################################################
 ## Mons #########################################################
@@ -428,6 +405,7 @@ row.names(phenoM_N0)=phenoM_N0$ERGE
 ### Correlations between phenotypic variables TTT=N
 ###############
 cormat=round(cor(phenoM_N[,colphenoM], method="spearman", use = "complete.obs"),2)
+write_tsv(data.frame(cormat), paste(dirout, "matrice_corr_PHENO_Exige_Mons_N.tab", sep="/"))
 
 ## add rownames of the data frame as new column named "var1"
 var_names=colnames(data.frame(cormat))
@@ -452,14 +430,11 @@ colnames(resPCAdf)[1]="ERGE"
 
 resPCAdf=left_join(resPCAdf, pheno_list, by="ERGE")
 
-# eigen values barplot
-barplot(resPCA$eig[1:20,1], ylab="Eigen values")
+par(mfrow=c(1,2))
 # percentage of explained variance barplot
 barplot(resPCA$eig[1:20,2], ylab="% explianed variance")	
 
 ## Factorial plan graphs
-# Genotypes graph
-
 plot(resPCAdf[,"Dim.1"],	# Dim.1 is X axe
      resPCAdf[,"Dim.2"],	# Dim.2 is Y axe
      main= "PCA PHENO Mons 2020 N",	# title
@@ -469,7 +444,7 @@ plot(resPCAdf[,"Dim.1"],	# Dim.1 is X axe
      xlab="Dim 1",
      ylab="Dim 2",
      col=c("red", "blue")[as.numeric(as.factor(resPCAdf$date_obt))],
-     sub=" blue=recent - red=ancien"
+     sub=" blue=recent  red=ancien"
 )
 abline(h=0,v=0,lty=2)			# adding lines
 
@@ -482,7 +457,7 @@ plot(resPCAdf[,"Dim.1"],	# Dim.1 is X axe
      xlab="Dim 1",
      ylab="Dim 2",
      col=c("red", "blue", "green", "black", "pink")[as.numeric(as.factor(resPCAdf$origine))],
-     sub="red=AmNord - blue=AmSud - green=Asie - black=Europe - pink=Océanie"
+     sub="red=AmNord  blue=AmSud  green=Asie  black=Europe  pink=Océanie"
 )
 abline(h=0,v=0,lty=2)			# adding lines
 
@@ -496,28 +471,17 @@ plot(resPCAdf[,"Dim.1"],
      xlab="Dim 1",
      ylab="Dim 3",
      col=c("red", "blue", "green", "black", "pink")[as.numeric(as.factor(resPCAdf$origine))],
-     sub="red=AmNord - blue=AmSud - green=Asie - black=Europe - pink=Océanie"
+     sub="red=AmNord  blue=AmSud  green=Asie  black=Europe  pink=Océanie"
 )
 abline(h=0,v=0,lty=2)			# adding lines
 
-plot(resPCAdf[,"Dim.2"],
-     resPCAdf[,"Dim.3"],
-     main= "PCA PHENO Mons 2020 N",	# title
-     pch=16,				# symbol circle
-     cex=1,				# half size symbol
-     asp=1,       # orthonormal basis
-     xlab="Dim 2",
-     ylab="Dim 3",
-     col=c("red", "blue", "green", "black", "pink")[as.numeric(as.factor(resPCAdf$origine))],
-     sub="red=AmNord - blue=AmSud - green=Asie - black=Europe - pink=Océanie"
-)
-abline(h=0,v=0,lty=2)			# adding lines
-
-plot.PCA(resPCA, choix="varcor", title="PCA PHENO Mons 2020 N")
+par(mfrow=c(1,1))
+plot.PCA(resPCA, choix="varcor", title="PCA PHENO Mons 2020 N", cex=0.8)
 
 ### Correlations between phenotypic variables TTT=N0
 ###############
 cormat=round(cor(phenoM_N0[,colphenoM], method="pearson", use = "complete.obs"),2)
+write_tsv(data.frame(cormat), paste(dirout, "matrice_corr_PHENO_Exige_Mons_N0.tab", sep="/"))
 
 ## add rownames of the data frame as new column named "var1"
 var_names=colnames(data.frame(cormat))
@@ -542,14 +506,11 @@ colnames(resPCAdf)[1]="ERGE"
 
 resPCAdf=left_join(resPCAdf, pheno_list, by="ERGE")
 
-# eigen values barplot
-barplot(resPCA$eig[1:20,1], ylab="Eigen values")
+par(mfrow=c(1,2))
 # percentage of explained variance barplot
 barplot(resPCA$eig[1:20,2], ylab="% explianed variance")	
 
 ## Factorial plan graphs
-# Genotypes graph
-
 plot(resPCAdf[,"Dim.1"],	# Dim.1 is X axe
      resPCAdf[,"Dim.2"],	# Dim.2 is Y axe
      main= "PCA PHENO Mons 2020 N0",	# title
@@ -559,7 +520,7 @@ plot(resPCAdf[,"Dim.1"],	# Dim.1 is X axe
      xlab="Dim 1",
      ylab="Dim 2",
      col=c("red", "blue")[as.numeric(as.factor(resPCAdf$date_obt))],
-     sub=" blue=recent - red=ancien"
+     sub=" blue=recent  red=ancien"
 )
 abline(h=0,v=0,lty=2)			# adding lines
 
@@ -572,7 +533,7 @@ plot(resPCAdf[,"Dim.1"],	# Dim.1 is X axe
      xlab="Dim 1",
      ylab="Dim 2",
      col=c("red", "blue", "green", "black", "pink")[as.numeric(as.factor(resPCAdf$origine))],
-     sub="red=AmNord - blue=AmSud - green=Asie - black=Europe - pink=Océanie"
+     sub="red=AmNord  blue=AmSud  green=Asie  black=Europe  pink=Océanie"
 )
 abline(h=0,v=0,lty=2)			# adding lines
 
@@ -586,32 +547,115 @@ plot(resPCAdf[,"Dim.1"],
      xlab="Dim 1",
      ylab="Dim 3",
      col=c("red", "blue", "green", "black", "pink")[as.numeric(as.factor(resPCAdf$origine))],
-     sub="red=AmNord - blue=AmSud - green=Asie - black=Europe - pink=Océanie"
+     sub="red=AmNord  blue=AmSud  green=Asie  black=Europe  pink=Océanie"
 )
 abline(h=0,v=0,lty=2)			# adding lines
 
-plot(resPCAdf[,"Dim.2"],
-     resPCAdf[,"Dim.3"],
-     main= "PCA PHENO Mons 2020 N0",	# title
-     pch=16,				# symbol circle
-     cex=1,				# half size symbol
-     asp=1,       # orthonormal basis
-     xlab="Dim 2",
-     ylab="Dim 3",
-     col=c("red", "blue", "green", "black", "pink")[as.numeric(as.factor(resPCAdf$origine))],
-     sub="red=AmNord - blue=AmSud - green=Asie - black=Europe - pink=Océanie"
-)
-abline(h=0,v=0,lty=2)			# adding lines
+par(mfrow=c(1,1))
+plot.PCA(resPCA, choix="varcor", title="PCA PHENO Mons 2020 N0", cex=0.8)
 
-plot.PCA(resPCA, choix="varcor", title="PCA PHENO Mons 2020 N0")
+
+###############################################################################
+## PCA 2 TTT A LA FOIS Alixan
+###############################################################################
+list=left_join(phenoA_irr[,c(1,2)], phenoA_dry[,c(1,2)], by="sample")[,2]
+phenoA_mean=rbind(phenoA_irr%>%filter(sample%in%list),phenoA_dry%>%filter(sample%in%list))
+
+###############################################################################
+phenoA_meanPCA=phenoA_mean%>%select("TTT", starts_with("p"),"GNC", "gli-glu_pN.flour", "SW_kg.hl", "TKW15_g",          
+                                    "GY15", "P", "L", "W", "Ie")%>%select(-"pN_brut", -"pProt_sec", -"p.ms")
+
+resAPCA=PCA(phenoA_meanPCA, graph=F, quali.sup=1, scale.unit=T)
+
+plot(resAPCA, choix="var", cex=0.8, title="Alixan PCA DRY+IRR (pheno pN)")
+#???plot(resAPCA, choix="ind", col.hab=c("blue", "black"), habillage=1, cex=0.8, title="Alixan PCA DRY+IRR (pheno pN)")
+plotellipses(resAPCA, col.quali=c("blue", "black"), cex=0.8, title="Alixan PCA DRY+IRR (pheno pN)")
+
+ggplot(phenoA_meanPCA, 
+       aes(x = resAPCA$ind$coord[,1], 
+           y = resAPCA$ind$coord[,2])) +
+  ggtitle(label="Alixan PCA DRY+IRR (pheno pN)")+
+  geom_point(aes(color=TTT)) +
+  geom_text(aes(color=TTT, vjust=-0.5), label=rownames(phenoA_meanPCA), x=resAPCA$ind$coord[,1], y=resAPCA$ind$coord[,2], size=3)+
+  stat_ellipse(aes(color=TTT))+
+  geom_vline(xintercept=0, lty=2)+geom_hline(yintercept=0, lty=2)+
+  geom_point(data=data.frame(resAPCA$quali.sup$coord),
+             aes(x = resAPCA$quali.sup$coord[,1], y = resAPCA$quali.sup$coord[,2]), color=c("red","#00BFC4"), size=3, shape=17)
+  
+####################
+phenoA_meanPCA=phenoA_mean%>%select("TTT", starts_with("qte"),"GNC", "gli-glu_pN.flour", "SW_kg.hl",           
+                                    "GY15", "P", "L", "W", "Ie")
+resAPCA=PCA(phenoA_meanPCA, graph=F, quali.sup=1, scale.unit=T)
+plot(resAPCA, choix="var", cex=0.8, title="Alixan PCA DRY+IRR (pheno qteN)")
+plotellipses(resAPCA, col.quali=c("blue", "black"), cex=0.8, title="Alixan PCA DRY+IRR (pheno qteN)")
+
+ggplot(phenoA_meanPCA, 
+       aes(x = resAPCA$ind$coord[,1], 
+           y = resAPCA$ind$coord[,2])) +
+  ggtitle(label="Alixan PCA DRY+IRR (pheno qteN)")+
+  geom_point(aes(color=TTT)) +
+  geom_text(aes(color=TTT, vjust=-0.5), label=rownames(phenoA_meanPCA), x=resAPCA$ind$coord[,1], y=resAPCA$ind$coord[,2], size=3)+
+  stat_ellipse(aes(color=TTT))+
+  geom_vline(xintercept=0, lty=2)+geom_hline(yintercept=0, lty=2)+
+  geom_point(data=data.frame(resAPCA$quali.sup$coord),
+             aes(x = resAPCA$quali.sup$coord[,1], y = resAPCA$quali.sup$coord[,2]), color=c("red","#00BFC4"), size=3, shape=17)
+
+
+###############################################################################
+## PCA 2 TTT A LA FOIS Mons
+###############################################################################
+phenoM_N[,2]==phenoM_N0[,2]
+phenoM_mean=rbind(phenoM_N,phenoM_N0)
+###############################################################################
+
+phenoM_meanPCA=phenoM_mean%>%filter(ERGE!="4911")%>%
+  select("TTT", starts_with("p"),"GNC", "gli-glu_pN.flour", "GY15", "P", "L", "W", "Ie")%>%  
+  select(-"pN_brut", -"pProt_sec", -"p.ms")
+resMPCA=PCA(phenoM_meanPCA, ncp=3, graph=F, quali.sup=1, scale.unit=T)
+plot(resMPCA, choix="var", cex=0.8, title="Mons PCA N+N0 (pheno pN)")
+plot(resMPCA, choix="ind", cex=0.8, title="Mons PCA N+N0 (pheno pN)")
+
+ggplot(phenoM_meanPCA, 
+       aes(x = resMPCA$ind$coord[,1], 
+           y = resMPCA$ind$coord[,2])) +
+  ggtitle(label="Mons PCA N+N0 (pheno pN)")+
+  geom_point(aes(color=TTT)) +
+  geom_text(aes(color=TTT, vjust=-0.5), label=rownames(phenoM_meanPCA), x=resMPCA$ind$coord[,1], y=resMPCA$ind$coord[,2], size=3)+
+  stat_ellipse(aes(color=TTT))+
+  geom_vline(xintercept=0, lty=2)+geom_hline(yintercept=0, lty=2)+
+  geom_point(data=data.frame(resAPCA$quali.sup$coord),
+             aes(x = resMPCA$quali.sup$coord[,1], y = resMPCA$quali.sup$coord[,2]), color=c("red","#00BFC4"), size=3, shape=17)
+
+
+####################
+phenoM_meanPCA=phenoM_mean%>%filter(ERGE!="4911")%>%
+  select("TTT", starts_with("qte"),"GNC", "gli-glu_pN.flour", "GY15", "pmg_sec", "P", "L", "W", "Ie")
+resMPCA=PCA(phenoM_meanPCA, ncp=3, graph=F, quali.sup=1, scale.unit=T)
+plot(resMPCA, choix="var", cex=0.8, title="Mons PCA N+N0 (pheno qteN)")
+plot(resMPCA, choix="ind", cex=0.8, title="Mons PCA N+N0 (pheno qteN)")
+
+ggplot(phenoM_meanPCA, 
+       aes(x = resMPCA$ind$coord[,1], 
+           y = resMPCA$ind$coord[,2])) +
+  ggtitle(label="Mons PCA N+N0 (pheno qteN)")+
+  geom_point(aes(color=TTT)) +
+  geom_text(aes(color=TTT, vjust=-0.5), label=rownames(phenoM_meanPCA), x=resMPCA$ind$coord[,1], y=resMPCA$ind$coord[,2], size=3)+
+  stat_ellipse(aes(color=TTT))+
+  geom_vline(xintercept=0, lty=2)+geom_hline(yintercept=0, lty=2)+
+  geom_point(data=data.frame(resAPCA$quali.sup$coord),
+             aes(x = resMPCA$quali.sup$coord[,1], y = resMPCA$quali.sup$coord[,2]), color=c("red","#00BFC4"), size=3, shape=17)
+
+
 
 dev.off()
 
 #################################################################################
-### Histogrammes Alixan
+#################################################################################
+#################################################################################
 
-list=left_join(phenoA_irr[,c(1,2)], phenoA_dry[,c(1,2)], by="sample")[,2]
-phenoA_mean=rbind(phenoA_irr%>%filter(sample%in%list),phenoA_dry%>%filter(sample%in%list))
+#################################################################################
+### DISTRIBUTIONS PHENO Alixan
+################################################################################
 
 pdf(paste(dirout,"histo_Alixan.pdf", sep="/"), width = 12, height = 8)
 
@@ -626,29 +670,58 @@ h=ggplot(dA_gathered, aes(measure))+
   facet_grid(rows=vars(TTT), cols=vars(trait), scales="free")
 plot(h)
 }
+
 dev.off()
 
+################################################################################
+################################################################################
+################################################################################
+is_outlier <- function(x) {
+  return(x < quantile(x, 0.25, na.rm=T) - 1.5 * IQR(x, na.rm=T) | x > quantile(x, 0.75, na.rm=T) + 1.5 * IQR(x, na.rm=T))
+}
+################################################################################
+################################################################################
+################################################################################
 
+###############################################
+pdf(paste(dirout,"boxplot_Alixan.pdf", sep="/"), width = 12, height = 8)
+
+for (i in 1:length(starts)) {
+  
+  dA_gathered=phenoA_mean%>%gather(colphenoA,key="trait", value="measure")%>%filter(trait%in%colphenoA[starts[i]:ends[i]])
+  
+  dat=dA_gathered%>%mutate(outlier=ERGE)%>%group_by(trait)%>%mutate(is_outlier=ifelse(is_outlier(measure), measure, as.numeric(NA)))
+  dat$outlier[which(is.na(dat$is_outlier))] <- as.numeric(NA)
+  
+  h=ggplot(dat, aes(x=TTT, y=measure))+
+    geom_boxplot(outlier.size=1)+
+    geom_text(aes(label=outlier),na.rm=TRUE, nudge_x=0.06, size=3)+
+    facet_grid(rows=vars(trait), cols=vars(TTT), scales="free")
+
+  plot(h)
+}
+dev.off()
+
+################################################################################
 ### Correlation PHENO 2 a 2 Alixan IRR vs DRY
 pdf(paste(dirout,"corr_PHENO_IRR_vs_DRY_Alixan.pdf", sep="/"), width = 12, height = 8)
 par(mfrow=c(2,3))
 
 for (t in 1:length(colphenoA)) {
   
+  r=cor(phenoA_irr[phenoA_irr$sample%in%list,colphenoA[t]], phenoA_dry[phenoA_dry$sample%in%list,colphenoA[t]])
   plot(phenoA_irr[phenoA_irr$sample%in%list,colphenoA[t]], phenoA_dry[phenoA_dry$sample%in%list,colphenoA[t]],
-       main=paste("ALIXAN",colphenoA[t]))
+       xlab="IRR", ylab="DRY", main=paste("ALIXAN    ",colphenoA[t], "   coeff.corr=", round(r,2), sep=""))
+  if (!is.na(r)) {
+    lines(lowess(phenoA_irr[phenoA_irr$sample%in%list,colphenoA[t]], phenoA_dry[phenoA_dry$sample%in%list,colphenoA[t]]), col="blue") }
 }
 dev.off()
 
-### Histogrammes Mons
-
-phenoM_N[,2]==phenoM_N0[,2]
-phenoM_mean=rbind(phenoM_N,phenoM_N0)
+################################################################################
+### DISTRIBUTION PHENO Mons
+################################################################################
 
 pdf(paste(dirout,"histo_Mons.pdf", sep="/"), width = 12, height = 8)
-
-starts=seq(from=1, to=51, by=5)
-ends=seq(from=5, to=55, by=5)
 
 for (i in 1:length(starts)) {
   
@@ -660,19 +733,49 @@ for (i in 1:length(starts)) {
 }
 dev.off()
 
+###############################################
+pdf(paste(dirout,"boxplot_Mons.pdf", sep="/"), width = 12, height = 8)
+
+for (i in 1:length(starts)) {
+  
+  dM_gathered=phenoM_mean%>%gather(colphenoM,key="trait", value="measure")%>%filter(trait%in%colphenoM[starts[i]:ends[i]])
+  
+  dat=dM_gathered%>%mutate(outlier=ERGE)%>%group_by(trait)%>%mutate(is_outlier=ifelse(is_outlier(measure), measure, as.numeric(NA)))
+  dat$outlier[which(is.na(dat$is_outlier))] <- as.numeric(NA)
+  
+  h=ggplot(dat, aes(x=TTT, y=measure))+
+    geom_boxplot(outlier.size=1)+
+    geom_text(aes(label=outlier),na.rm=TRUE, nudge_x=0.06, size=3)+
+    facet_grid(rows=vars(trait), cols=vars(TTT), scales="free")
+  
+  plot(h)
+}
+dev.off()
+
+#dat[!is.na(dat$outlier) & dat$trait=="Ie",]
+
+###############################################
 
 
 ### Correlation PHENO 2 a 2 Mons IRR vs DRY
 pdf(paste(dirout,"corr_PHENO_N_vs_N0_Mons.pdf", sep="/"), width = 12, height = 8)
 par(mfrow=c(2,3))
 
+listM=list[!list %in% c("bc2033", "bc2052")]
+
 for (t in 1:length(colphenoM)) {
-  
-  plot(phenoM_N[,colphenoM[t]], phenoM_N0[,colphenoM[t]],
-       main=paste("MONS",colphenoM[t]))
+  r=cor(phenoM_N[phenoM_N$sample%in%listM,colphenoM[t]], phenoM_N0[phenoM_N0$sample%in%listM,colphenoM[t]])
+  plot(phenoM_N[phenoM_N$sample%in%listM,colphenoM[t]], phenoM_N0[phenoM_N0$sample%in%listM,colphenoM[t]],
+       xlab="N", ylab="N0", main=paste("MONS    ",colphenoM[t], "   coeff.corr=", round(r,2), sep=""))
+  if (!is.na(r)) {
+    lines(lowess(phenoM_N[phenoM_N$sample%in%listM,colphenoM[t]], phenoM_N0[phenoM_N0$sample%in%listM,colphenoM[t]]), col="blue") }
 }
 dev.off()
 
+
+#################################################################################
+#################################################################################
+#################################################################################
 #################################################################################
 ## join data pheno avec structure
 
