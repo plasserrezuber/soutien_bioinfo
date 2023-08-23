@@ -1,5 +1,7 @@
 #!/bin/python
 # coding: utf-8
+## with python version > 3.4.5
+
 
 import re, argparse, sys, os.path, pprint
 from collections import defaultdict
