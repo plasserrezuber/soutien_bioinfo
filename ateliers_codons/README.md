@@ -7,7 +7,7 @@ Prochainement, ces ateliers codons seront proposés par la formation permanente 
 
 ## L'atelier data.table  
 
-![battle](battle.png)
+![battle](/battle.png)
 
 Pour des tables de données de taille petite et moyenne (inférieure à 1 Go ou moins d’un million d’observations), il est recommandé d’utiliser le package dplyr.  
 Pour des tables de données de grande taille (plus de 1 Go ou plus d’un million d’observations), il est recommandé d’utiliser le package data.table  
@@ -31,6 +31,11 @@ Les codes de cet atelier sont dans le répertoire /posts/07-data.table.
 
 Le site web de supports de cours est construit avec l'outil quarto et hébergé par Netlify.  
 Lien vers l'atelier [data.table](https://ateliers-codons.netlify.app/posts/07-data.table/)  
+
+## les data
+
+Les fichiers de données peuvent être téléchargés ici:  
+[data](https://forgemia.inra.fr/ateliers_codons/data.table/-/tree/main)
 
 ## Support  
 
