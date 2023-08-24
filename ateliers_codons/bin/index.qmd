@@ -1,0 +1,493 @@
+---
+title: "{data.table}"
+subtitle: "Importer, formater et manipuler vos données: {data.table} vs {tidyverse}"
+author:
+  - Pauline Lasserre-Zuber
+date: "2023-08-24"
+categories: [R, data.table, tidyverse]
+format: 
+  html: 
+    toc: true
+    toc-depth: 2
+    self-contained: true
+draft: false
+---
+
+![](img/battle.png)
+
+# Introduction
+
+<br>
+
+Pour des tables de données de taille petite et moyenne (inférieure à 1 Go ou moins d'un million d'observations), il est recommandé d'utiliser le package `dplyr`. Pour des tables de données de grande taille (plus de 1 Go ou plus d'un million d'observations), il est recommandé d'utiliser le package `data.table`.
+
+Un des atouts fondamentaux de `data.table` est sa syntaxe compacte qui lui vaut sa rapidité : `data.table` ne manipule que les colonnes mentionnées dans l'opérateur `[…]`, ce qui réduit le temps de traitement des données.
+
+La forme générale de l'opérateur `[…]` est la suivante :
+
+```{r, echo=TRUE, eval=FALSE}
+DT[i, j, by]
+```
+
+On part du data.table **DT**, on sélectionne certaines lignes avec **i**, puis on calcule **j** pour chaque groupe défini par **by**. Si on fait un parallèle avec SQL, i correspond au WHERE, j au SELECT et by au GROUP BY. La fonction `[…]` présente deux grands avantages: pas de préfixe DT\$ pour se référer aux variables à l'intérieur de \[...\] et sa concision.
+
+Les fonctions `setDT()` et `as.data.table()` convertissent un data.frame en data.table
+
+Les data.tables sont simplement des data.frames particuliers, donc on peut normalement leur appliquer toutes les méthodes valables pour les data.frames. En particulier, on peut utiliser avec data.table toutes les fonctions des packages habituellement associés à dplyr : stringr pour le maniement de chaînes de caractères, etc.
+
+<br>
+
+Sommaire :
+
+**1. [IMPORT DE TABLES FORMAT LONG: readr vs fread](#long)** : [setup](#setup), [import table 1](#table1), [import table 2](#table2), [sélection des données à importer](#col_select), [presentation des données](#presentation)
+
+**2. [CALCULS SUR LES COLONNES](#mean)** : [calculs par groupe selon critères](#mean), [enchainer les calculs](#arrange)
+
+**3. [CREER UNE NOUVELLE COLONNE SELON CRITERES](#mutate)**
+
+**4. [SELECTIONNER DES COLONNES](#select)**: [tydiverse](#tidyverse1), [data.table](#data.table1)
+
+**5. [JOINDRE DES TABLES](#join)**: [Rbase](#Rbase2), [tydiverse](#tidyverse2), [data.table avec ou sans index](#data.table2)
+
+**6. [EXPORTATION DE TABLE](#write)**: [Rbase](#Rbase3), [tydiverse](#tidyverse3), [data.table](#data.table3)
+
+**7. [IMPORT DE TABLE FORMAT LARGE](#wide)**: [tydiverse](#tidyverse4), [data.table](#data.table4)
+
+**8. [FORMATAGE DES DONNEES](#lapply)**: [tydiverse](#tidyverse5), [data.table](#data.table5)
+
+<br>
+
+# 1. Importer des tables au format long : `readr` vs `fread`
+
+## Setup {#setup}
+
+```{r, echo=TRUE, eval=FALSE}
+# Chargement des packages
+library(readr)
+library(dplyr)
+library(stringr)
+
+library(data.table)
+```
+
+Télécharger les fichiers suivants (en cliquant sur l'icône **Download**) et sauvegardez-les dans votre répertoire de travail :
+
+-   [Fichier 1](https://forgemia.inra.fr/ateliers_codons/data.table/-/blob/main/ISBPS_REFSEQV2_vs_RENAN_PSEUDOV2_filtered.bam_summary.tsv)
+
+-   [Fichier 2](https://forgemia.inra.fr/ateliers_codons/data.table/-/blob/main/Tae.Chinese_Spring.refSeqv2.1.ISBPs_fasta.txt)
+
+![](img/download.png)
+
+<br>
+
+## Import table 1 {#table1}
+
+```{r, echo=TRUE, eval=FALSE}
+# package readr de la suite tidyverse
+start.time <- Sys.time()
+d <- read_tsv("ISBPS_REFSEQV2_vs_RENAN_PSEUDOV2_filtered.bam_summary.tsv", col_names=T)
+time.tidy <- Sys.time() - start.time
+```
+
+```{r, echo=TRUE, eval=FALSE}
+#package data.table
+##info systeme:
+names(s <- Sys.getenv())
+Sys.getenv("NUMBER_OF_PROCESSORS")
+Sys.getenv("PROCESSOR_LEVEL")
+Sys.getenv("OMP_THREAD_LIMIT")
+Sys.setenv("OMP_THREAD_LIMIT"=4)
+Sys.getenv("OMP_THREAD_LIMIT")
+
+
+##nThread=1
+setDTthreads(threads=1, restore_after_fork=TRUE)
+getDTthreads(verbose = getOption("datatable.verbose"))
+
+start.time <- Sys.time()
+dt <- fread("ISBPS_REFSEQV2_vs_RENAN_PSEUDOV2_filtered.bam_summary.tsv",
+         nThread=1, sep="\t", header=TRUE, dec=".", encoding = "UTF-8", showProgress=TRUE)
+time.dt1 <- Sys.time() - start.time
+time.dt1
+time.tidy
+
+##nThread=4
+setDTthreads(threads=6, restore_after_fork=TRUE)
+getDTthreads(verbose = getOption("datatable.verbose"))
+
+start.time <- Sys.time()
+dt <- fread("ISBPS_REFSEQV2_vs_RENAN_PSEUDOV2_filtered.bam_summary.tsv", 
+         nThread=4, sep="\t", header=TRUE, dec=".", encoding = "UTF-8", showProgress=TRUE)
+time.dt4 <- Sys.time() - start.time
+time.dt4
+time.tidy
+
+#definition d'un deuxieme seprarteur (sep2) possible !!! :))
+#NB: option stringsAsFactors = TRUE peut ralentir sensiblement l’importation des donnees
+```
+
+<br>
+
+## Import table 2 {#table2}
+
+```{r, echo=TRUE, eval=FALSE}
+
+#package readr de la suite tidyverse
+start.time <- Sys.time()
+fa <- read_tsv("Tae.Chinese_Spring.refSeqv2.1.ISBPs_fasta.txt", col_names=F)
+time.tidy <- Sys.time() - start.time
+
+colnames(fa) <- c("read_id","seq")
+
+#package data.table  ---> nThread 
+start.time <- Sys.time()
+fadt <- fread("Tae.Chinese_Spring.refSeqv2.1.ISBPs_fasta.txt",
+           nThread=4, sep="\t", colClasses=c("character", "character"), header=FALSE,
+           encoding = "UTF-8", showProgress=TRUE)
+time.dt4 <- Sys.time() - start.time
+time.dt4
+time.tidy
+```
+
+<br>
+
+## Sélection des données à importer {#col_select}
+
+```{r, echo=TRUE, eval=FALSE}
+# #package readr de la suite tidyverse
+start.time <- Sys.time()
+d <- read_tsv("ISBPS_REFSEQV2_vs_RENAN_PSEUDOV2_filtered.bam_summary.tsv", col_names=T,
+           col_select = -"query_length")
+time.tidy <- Sys.time() - start.time
+
+
+#pour selectionner des colonnes à importer: option "col_select" avec ou sans -
+#pour importer une portion de table: option "skip" et "n_max
+
+
+#package data.table
+start.time <- Sys.time()
+dt <- fread("ISBPS_REFSEQV2_vs_RENAN_PSEUDOV2_filtered.bam_summary.tsv", 
+         nThread=4, sep="\t", header=TRUE, dec=".", encoding = "UTF-8", showProgress=TRUE,
+         drop="query_length")
+time.dt4 <- Sys.time() - start.time
+time.dt4
+time.tidy
+
+#pour selectionner des colonnes à importer: option "clo_select" avec ou sans -
+#pour importer une portion de table: option "skip" + "nrows"
+
+```
+
+<br> \## Presentation des données {#presentation}
+
+```{r, echo=TRUE, eval=FALSE}
+#suite tidyverse
+d
+fa
+
+df <- data.frame(d)
+fadf <- data.frame(fa)
+
+#package data.table
+dt
+fadt
+colnames(fadt) <- c("read_id","seq")
+
+options("datatable.print.keys" = TRUE, "datatable.print.class" = TRUE)
+dt
+```
+
+<br>
+
+# 2. Calculs sur les colonnes
+
+## Calculs par groupe selon critères {#mean}
+
+```{r, echo=TRUE, eval=FALSE}
+# R base
+start.time <- Sys.time()
+head(df)
+aggregate(df[df[["alignemnt_length"]]==150, "mapq"],
+          by=list(df[df[["alignemnt_length"]]==150, "missmatches"]),
+          FUN=mean)
+Sys.time() - start.time
+
+#suite tidyverse
+start.time <- Sys.time()
+print(d %>%
+  dplyr::filter(alignemnt_length==150)%>%
+  dplyr::group_by(missmatches)%>%
+  dplyr::summarise(mean(mapq)),
+  n=100)
+Sys.time() - start.time
+
+
+#package data.table
+start.time <- Sys.time()
+dt[alignemnt_length==150, mean(mapq), by = missmatches]
+Sys.time() - start.time
+```
+
+<br> \## Enchainer les calculs {#arrange}
+
+Dplyr utilise l'opérateur pipe %\>%.
+
+Avec data.table, il suffit d'accoler les opérateurs \[\]: dt\[opération 1\]\[opération 2\]\[opération 3\]\[...\]
+
+```{r, echo=TRUE, eval=FALSE}
+#suite tidyverse
+print(d %>%
+        dplyr::filter(alignemnt_length==150) %>%
+        dplyr::group_by(missmatches) %>%
+        dplyr::summarise(mean(mapq))%>%
+        arrange(`mean(mapq)`),
+      n=100)
+
+#package data.table
+dt[alignemnt_length==150, mean(mapq), by = missmatches][order(missmatches)]
+```
+
+<br>
+
+# 3. Créer une nouvelle colonnes selon critères {#mutate}
+
+```{r, echo=TRUE, eval=FALSE}
+#suite tidyverse
+##dim ligne --NON-- constante, dim colonne +1 : on cree la colonne nomee "keep"
+d_filt=d %>%
+  filter(alignemnt_length==150 & mapq==60)%>%
+  mutate(keep="OK")
+d_filt
+
+##dim ligne constante, dim colonne +1 : on cree la colonne nomee "keep"
+start.time <- Sys.time()
+d=d %>%
+  mutate(keep=if_else(alignemnt_length==150 & mapq==60,"OK","NA"))
+Sys.time() - start.time
+
+d
+#NB: assignation necessaire
+
+
+#package data.table
+##utilise beaucoup moins de memoire vive
+##la fonction := s’appelle “assignation par reference”, elle peut prendre des arguments entre parentheses`:=`()
+
+##dim ligne --NON-- constante, dim colonne +1
+dt_filt=dt[alignemnt_length==150 & mapq==60][, keep:= "OK"]
+dt_filt
+
+##dim ligne constante, dim colonne +1
+start.time <- Sys.time()
+dt[alignemnt_length==150 & mapq==60, keep:= "OK"]
+#NB: pas d'assignation, table modifiee par reference
+Sys.time() - start.time
+
+dt[, keep:= "OK"][alignemnt_length!=150 | mapq!=60, keep:= NA]
+```
+
+<br>
+
+# 4. Sélectionner des colonnes {#select}
+
+## tidyverse {#tidyverse1}
+
+```{r, echo=TRUE, eval=FALSE}
+#suite tidyverse
+d%>%select(read_id, missmatches, mapq)
+
+#package data.table
+dt[, .(read_id, missmatches, mapq)]   #NB: .() est un alias pour "list()"
+
+dt[, .SD, .SDcols=c("read_id", "missmatches", "mapq")] #ecriture a combiner avec lapply
+#SD pour Subset of Data: les colonnes listees seront aliasees par .SD avec la dimension .SDcols
+#et par defaut, toutes les colonnes sont traitees
+```
+
+<br> \## data.table {#data.table1}
+
+```{r, echo=TRUE, eval=FALSE}
+# 
+```
+
+<br>
+
+# 5. Joindre des tables {#join}
+
+## Rbase {#Rbase2}
+
+```{r, echo=TRUE, eval=FALSE}
+
+ # R base
+start.time <- Sys.time()
+#df_join=base::merge(df,fadf, by="read_id", all.x=TRUE)
+Sys.time() - start.time
+#####Time difference of 1.373174 mins
+
+```
+
+<br> \## tydiverse {#tidyverse2}
+
+```{r, echo=TRUE, eval=FALSE}
+#suite tidyverse
+start.time <- Sys.time()
+d_join=d%>%left_join(fa)   #NB: une seule var key commune, nul besoin de preciser la var de jointure
+#sinon: d_join=d%>%left_join(y=fa, by="read_id")
+Sys.time() - start.time
+```
+
+<br> \## data.table avec ou sans index {#data.table2}
+
+```{r, echo=TRUE, eval=FALSE}
+#package data.table
+##avec merge, meme ecriture qu'avec la fonction de R base
+
+start.time = Sys.time()
+dt_join=merge(dt,fadt, by="read_id", all.x=T)
+time.dt_sansindex = Sys.time() - start.time
+
+start.time = Sys.time()
+dt_join=dt[fadt, on="read_id", nomatch=NULL]
+Sys.time() - start.time
+
+##indexation de tables: accelere les combinaisons de donnees
+setkey(dt, read_id)
+setkey(fadt, read_id)
+
+start.time = Sys.time()
+dt_join=merge(dt,fadt, by="read_id", all.x=T)
+time.dt_avecindex = Sys.time() - start.time
+time.dt_sansindex
+time.dt_avecindex
+
+key(dt)
+setkey(dt, NULL)
+key(dt)
+```
+
+<br>
+
+# 6. Exporter des tables {#write}
+
+## Rbase {#Rbase3}
+
+```{r, echo=TRUE, eval=FALSE}
+#R base
+start.time <- Sys.time()
+#write.table(df_join, "ISBP_REFSEQV2_vs_RENAN_with_FASTA.TAB", col.names=T)
+Sys.time() - start.time
+#Time difference of 1.977623 mins
+```
+
+<br> \## tydiverse {#tidyverse3}
+
+```{r, echo=TRUE, eval=FALSE}
+#suite tidyverse package readr
+start.time <- Sys.time()
+write_tsv(d_join, "ISBP_REFSEQV2_vs_RENAN_with_FASTA.TAB", col_names=T)
+Sys.time() - start.time  # ~20 à 30sec
+```
+
+<br> \## data.table {#data.table3}
+
+```{r, echo=TRUE, eval=FALSE}
+#package data.table
+start.time <- Sys.time()
+fwrite(dt_join, "ISBP_REFSEQV2_vs_RENAN_with_FASTA.TAB", col.names=T)
+Sys.time() - start.time  # moins de 2 secondes
+```
+
+<br>
+
+# 7. Importer des tables au format large {#wide}
+
+## tydiverse {#tidyverse4}
+
+```{r, echo=TRUE, eval=FALSE}
+# TRANSPOSITION 
+mat_join=as.matrix(dt_join)
+dim(mat_join)
+head(mat_join, n=1)
+colnames(mat_join)
+
+tmat_join=as.matrix(t(mat_join))
+dim(tmat_join)
+head(tmat_join[,c(1,2,3,4,5)], n=9)
+tmat_join=data.table(tmat_join)
+
+fwrite(tmat_join, "ISBP_REFSEQV2_vs_RENAN_with_FASTA_transposed_dt.TAB", sep="\t", col.names=F)
+
+#package readr de la suite tidyverse
+start.time <- Sys.time()
+#d_trans=read_tsv("ISBP_REFSEQV2_vs_RENAN_with_FASTA_transposed_dt.TAB", col_names=F)
+time.tidy <- Sys.time() - start.time ## tres tres long
+
+```
+
+<br> \## data.table {#data.table4}
+
+```{r, echo=TRUE, eval=FALSE}
+#package data.table
+start.time <- Sys.time()
+dt_trans=fread("ISBP_REFSEQV2_vs_RENAN_with_FASTA_transposed_dt.TAB", 
+         nThread=4, sep="\t", header=FALSE, dec=".", encoding = "UTF-8", showProgress=TRUE)
+time.dt <- Sys.time() - start.time
+time.dt # ~16 secondes
+time.tidy
+```
+
+<br>
+
+# 8. Formater des données {#lapply}
+
+## tydiverse {#tidyverse5}
+
+```{r, echo=TRUE, eval=FALSE}
+# mutate sur une colonne avec tidyverse
+start.time <- Sys.time()
+d_joinU=d_join %>% head(5)%>%mutate(seq=str_replace_all(seq,"T","U"))
+time.tidy <- Sys.time() - start.time
+
+### mutate(across) sur toutes les colonnes 
+tmat_d_join=tibble(tmat_join[,1:100000])
+
+start.time <- Sys.time()
+tmat_d_joinU=tmat_d_join %>% mutate(across(everything(), ~gsub("T","U",.)))
+time.tidy <- Sys.time() - start.time
+time.tidy
+
+head(tmat_d_joinU[,c(1,2,3,4,5)], n=9)
+
+```
+
+<br>
+
+## data.table {#data.table5}
+
+```{r, echo=TRUE, eval=FALSE}
+# str_replace sur une colonne
+start.time <- Sys.time()
+dt_joinU=dt_join[1:5,][,seq:=str_replace_all(seq,"T","U")]
+time.dt <- Sys.time() - start.time
+time.dt
+time.tidy
+
+### lapply .SD .SDcols sur 5 colonnes
+cols=c("V1","V2","V3","V4","V5")
+tmat_dt_joinU=tmat_dt_join[,(cols):=lapply(.SD, function(x) gsub("T","U",as.character(x))), .SDcols=cols]
+head(tmat_dt_joinU[,c(1,2,3,4,5)], n=9)
+
+### lapply .SD .SDcols sur toutes les colonnes 
+cols=c("V1","V2","V3","V4","V5")
+start.time <- Sys.time()
+tmat_dt_joinU=lapply(tmat_dt_join, function(x) gsub("T","U",as.character(x)) )
+time.dt <- Sys.time() - start.time
+time.dt
+
+head(tmat_dt_joinU[,c(1,2,3,4,5)], n=9)
+```
+
+<br>
+
+*Références [UtilitR](https://www.book.utilitr.org/datatable.html)*
