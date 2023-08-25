@@ -9,7 +9,7 @@ RepeatMasker, ClariTE
 
 ## Results  
 
-![Table](/table.png)
+![Table](table.png)
 
 ## Support  
 
