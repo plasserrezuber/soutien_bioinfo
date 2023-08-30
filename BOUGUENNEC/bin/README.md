@@ -7,7 +7,7 @@ from /home/login/projects/soutien_bioinfo/BOUGUENNEC/ on HPC2 cluster (Mésocent
 
 Reference genome: [Rabanus-Wallace et al, 2021](https://doi.org/10.1038/s41588-021-00807-0)  
 
-RepeatMasker, ClariTE  
+Tools: RepeatMasker, ClariTE  
 
 ## Results  
 
@@ -24,7 +24,3 @@ Describe TE length proportion changes for 10 top TE-families compared to referen
 ## Authors and acknowledgment  
 
 Pauline LASSERRE-ZUBER (INRAe), Frederic CHOULET (INRAe)  
-
-## Project status  
-
-Gene annotation in progress.  
