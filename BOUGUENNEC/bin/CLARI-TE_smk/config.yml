@@ -1,0 +1,15 @@
+# Path to the genome's fasta to annotate
+genomeFasta:
+  "/storage/groups/gdec/shared/Secale_cereale/Lo7_RefSeq/Secale_cereale_Lo7_RefSeq_RabanusWallace_etal_2020_pseudomolecules.fasta"
+
+# Fill in the TEs' ID prefix for feature annotation in gff3
+TeIDsPrefix:
+  "SecerLo7_"
+
+# slurm parameters on HPC cluster
+cluster:
+  "sbatch --parsable -p normal --cpus-per-task {threads} --job-name={rule}.{wildcards} -o snake_logs/{rule}.{wildcards}.%j.out -e snake_logs/{rule}.{wildcards}.%j.err"
+
+## Library used by RepeatMasker: "bin/clariTE_1.0/CLARIwheat.fasta" by default, can be changed if you have another TE sequence database
+clariTElib:
+  "bin/clariTE_1.0/CLARIwheat.fasta"
