@@ -370,7 +370,7 @@ USAGE:
          -note                 Convert all tags/values to a single tag Note="tag:xxx; tag:xxx; tag:xxx"
          -cds                  Build features gene/mRNA/exon according to CDS (considers only CDSs)
          -RMclariTE            Build GFF specifically for RepeatMasker CLARITE EMBL files
-		 -featurePrefix        Give custom (genome specific) prefix for CLARITE features (default: genome)
+		 -featurePrefix        Give custom (genome specific) prefix for CLARITE features, only if RMclariTE option enabled (default: genome)
          -l <interger>         Length threshold to skip small features [default: 1 bp]
          -h:                   Print this help
 
