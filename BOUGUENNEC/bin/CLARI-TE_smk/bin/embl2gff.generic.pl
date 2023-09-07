@@ -18,12 +18,14 @@ my $opt_digit = 6;
 my $opt_length = 1;
 my $opt_note;
 my $opt_outfile;
-my $opt_renan;
+my $opt_RMclariTE;
+my $opt_featurePrefix = 'genome';
 my $opt_cds;
 &GetOptions("h|help"   => \&help,
             "source=s" => \$sourceTag,
             "seqid=s"  => \$opt_seqId,
-            "renan"    => \$opt_renan,
+            "RMclariTE"    => \$opt_RMclariTE,
+			"featurePrefix=s" => \$opt_featurePrefix,
             "cds"      => \$opt_cds,
             "o"        => \$opt_outfile,
             "d=i"      => \$opt_digit,
@@ -54,7 +56,8 @@ sub setOptions {
 	$self->{opt_seqId} = $opt_seqId;
 	$self->{opt_outfile} = $opt_outfile;
 	$self->{opt_digit} = $opt_digit;
-	$self->{opt_renan} = $opt_renan;
+	$self->{opt_RMclariTE} = $opt_RMclariTE;
+	$self->{opt_featurePrefix} = $opt_featurePrefix;
 	$self->{opt_cds} = $opt_cds;
 	$self->{opt_note} = $opt_note;
 	$self->{opt_length} = $opt_length;
@@ -86,7 +89,7 @@ sub getFeatures {
 			$self->{seqId} = basename($self->{inputFile}) . "." . $kSeq;
 		}
 
-		$self->{opt_renan} and $self->renan_clarite_seqid_builder();
+		$self->{opt_RMclariTE} and $self->RMclariTE_clarite_seqid_builder();
 
 		### the "region" feature
 		$self->{feature}->{$kSeq}->{region} = Bio::SeqFeature::Generic->new(-seq_id      => $self->{seqId},
@@ -112,8 +115,8 @@ sub getFeatures {
 			                                                         -end         => $self->{feat}->{location}->{end},
 			                                                         -strand      => $self->{feat}->{location}->{strand} ) ;
 
-			if($self->{opt_renan}){
-				$self->renan_clarite_gff_builder($feature);
+			if($self->{opt_RMclariTE}){
+				$self->RMclariTE_clarite_gff_builder($feature);
 				$self->{gffIo}->write_feature($self->{feat}->{obj});
 				$self->create_subfeatures_match_part();
 			}
@@ -132,24 +135,24 @@ sub getFeatures {
 	return 1;
 }
 
-sub renan_clarite_seqid_builder {
+sub RMclariTE_clarite_seqid_builder {
 	my $self = shift;
-	if (basename($self->{inputFile})=~/^((chr.*)#\d+#\d+)\.fa/) {
+	if (basename($self->{inputFile})=~/^((\w+)#\d+#\d+)\.fa/) {
 		($self->{seqId}, $self->{chr}) = ($1, $2);
 	}
-	elsif (basename($self->{inputFile})=~/^((chr.*):\d+\-\d+)\.fa/) {
+	elsif (basename($self->{inputFile})=~/^((\w+):\d+\-\d+)\.fa/) {
 		($self->{seqId}, $self->{chr}) = ($1, $2);
 	}
 	return 1;
 }
 
-sub renan_clarite_gff_builder {
+sub RMclariTE_clarite_gff_builder {
 	my $self = shift;
 	my $feature = shift;
 	my $pritag = $self->{feat}->{obj}->primary_tag;
 	$self->{k_pritag}->{$pritag} or $self->{k_pritag}->{$pritag} = 0; #initialize pritag counter
 	$self->{k_pritag}->{$pritag}++;
-	my $ftid = 'TraesRe_' . $self->{chr} . '_' . sprintf $pritag."_%.".$self->{opt_digit}."d", $self->{k_pritag}->{$pritag};
+	my $ftid = $self->{opt_featurePrefix} . $self->{chr} . '_' . sprintf $pritag."_%.".$self->{opt_digit}."d", $self->{k_pritag}->{$pritag};
 	$self->{feat}->{obj}->add_tag_value("ID", $ftid);
 	$self->{feat}->{id} = $ftid;
 
@@ -366,7 +369,8 @@ USAGE:
          -d <integer>          Length of the digit in the ID of features [default: 6]
          -note                 Convert all tags/values to a single tag Note="tag:xxx; tag:xxx; tag:xxx"
          -cds                  Build features gene/mRNA/exon according to CDS (considers only CDSs)
-         -renan                Build GFF specifically for Renan CLARITE EMBL files
+         -RMclariTE            Build GFF specifically for RepeatMasker CLARITE EMBL files
+		 -featurePrefix        Give custom (genome specific) prefix for CLARITE features (default: genome)
          -l <interger>         Length threshold to skip small features [default: 1 bp]
          -h:                   Print this help
 
