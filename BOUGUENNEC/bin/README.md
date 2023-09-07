@@ -21,7 +21,7 @@ Eventually custom the cluster parameters in "hpc2_ressources.json" file accordin
 
 To launch the smk pipeline: 
 ```console
-snakemake --use-conda -j 20 --cluster-config hpc2_ressources.json --cluster --latency-wait 30
+snakemake --use-conda -j 20 --cluster-config hpc2_ressources.json --latency-wait 30
 ```
 
 A visualization of the rules executed by the smk pipeline:
