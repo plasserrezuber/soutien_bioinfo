@@ -13,7 +13,7 @@ module load bedtools/2.27.1 exonerate/2.4.0 samtools/1.3 GenomeTools/1.5.5 biope
 ####################################################################################
 ##### DEFINITION VARIABLES
 
-DATA='/storage/groups/gdec/shared/Secale_cereale/Lo7_RefSeq'    #Secale_cereale_Lo7_RefSeq_RabanusWallace_etal_2020_pseudomolecules.fasta
+DATA='/storage/groups/gdec/shared/secale_cereale/Lo7_RefSeq'    #Secale_cereale_Lo7_RefSeq_RabanusWallace_etal_2020_pseudomolecules.fasta
 OUTPUT='/home/palasser/projects/soutien_bioinfo/BOUGUENNEC/results/annotTE_Lo7'
 
 ####################################################################################
@@ -25,18 +25,18 @@ cd $OUTPUT/${chrom}
 
 ###### Chunks
 ## create one fasta per chromosome
-samtools faidx $DATA/Secale_cereale_Lo7_RefSeq_RabanusWallace_etal_2020_pseudomolecules.fasta $chrom > $OUTPUT/${chrom}/${chrom}.fasta
+samtools faidx $DATA/Secale_cereale_Lo7_RefSeq_RabanusWallace_etal_2020_pseudomolecules.fasta $chrom > ${chrom}.fasta
 ##other methods
 ##gawk -v seq='chr'$chrom 'BEGIN { RS=">" } { if ($0 ~ seq) print RS $0 }' $DATA/Secale_cereale_Lo7_RefSeq_RabanusWallace_etal_2020_pseudomolecules.fasta > $OUTPUT/${chrom}/${chrom}.fasta
 ##echo $chrom > chrom.txt; seqtk subseq $DATA/Secale_cereale_Lo7_RefSeq_RabanusWallace_etal_2020_pseudomolecules.fasta chrom.txt > $OUTPUT/${chrom}/${chrom}.fasta
 
-samtools faidx $OUTPUT/$chrom/${chrom}.fasta
-bedtools makewindows -g $OUTPUT/${chrom}/${chrom}.fasta.fai -w 10000000 > $OUTPUT/${chrom}/${chrom}.windows.bed
+samtools faidx ${chrom}.fasta
+bedtools makewindows -g ${chrom}.fasta.fai -w 10000000 > ${chrom}.windows.bed
 
-bedtools getfasta -bed $OUTPUT/${chrom}/${chrom}.windows.bed -fi $OUTPUT/${chrom}/${chrom}.fasta > $OUTPUT/${chrom}/${chrom}.windows.fasta
-fastaexplode -f $OUTPUT/${chrom}/${chrom}.windows.fasta -d $OUTPUT/${chrom}
+bedtools getfasta -bed ${chrom}.windows.bed -fi ${chrom}.fasta > ${chrom}.windows.fasta
+fastaexplode -f ${chrom}.windows.fasta -d $OUTPUT/${chrom}
 
-files=($(find $OUTPUT/${chrom}/${chrom}*.fa))
+files=($(find ${chrom}*.fa))
 k=$((${#files[@]}-1))  #recupere le nb d'item dans la liste 'files'
 
 
@@ -47,7 +47,7 @@ echo "$RMjid : RepeatMasker on ${chrom}"
 
 if [ $(find ${chrom}:*.fa.out.xm |wc -l) = $(($k+1)) ];
     then echo ${chrom}": all RepeatMasker output files there";
-    else echo ${chrom}": missing "$(($(find $OUTPUT/${chrom}/${chrom}:*.fa |wc -l) - $(find $OUTPUT/${chrom}/${chrom}:*.fa.out.xm |wc -l) ))" RepeatMasker output files";
+    else echo ${chrom}": missing "$(($(find ${chrom}:*.fa |wc -l) - $(find ${chrom}:*.fa.out.xm |wc -l) ))" RepeatMasker output files";
 fi
 
 # ## rescue example:
@@ -64,13 +64,13 @@ echo "$CLARITEjid : clariTE on ${chrom}"
 
 if [ $(find ${chrom}:*.fa.out_anno.embl |wc -l) = $(($k+1)) ];
     then echo ${chrom}": all clariTE output files there";
-    else echo ${chrom}": missing "$(($(find $OUTPUT/${chrom}/${chrom}:*.fa |wc -l) - $(find $OUTPUT/${chrom}/${chrom}:*.fa.out_anno.embl |wc -l) ))" clariTE output files";
+    else echo ${chrom}": missing "$(($(find ${chrom}:*.fa |wc -l) - $(find ${chrom}:*.fa.out_anno.embl |wc -l) ))" clariTE output files";
 fi
 
 ###### embl2gff: takes all chunks embl and produces one merged .gff
 ## le script embl2gff.generic.pl numerote les TE par chrom (et non par chunk) en repartant de zero pour chaque chrom a condition
 ## de fournir la liste ordonnee des fichiers pour l'ensemble des chunks par chromosome
-embl_files=$(\ls -1 $OUTPUT/${chrom}/${chrom}*.embl |sort -t ':' -k2,2n |tr -s '\n' ' ')
+embl_files=$(\ls -1 ${chrom}*.embl |sort -t ':' -k2,2n |tr -s '\n' ' ')
 /storage/groups/gdec/bin/scripts/embl2gff.generic.pl -renan -note -l 10 $embl_files > $OUTPUT/Lo7_RefSeq_${chr}_clariTE.gff
 
 ###### gff to gff3: recalcul des coordonnees avec gawk (transfo de relatives aux chunks vers relatives au chrom) + mise en forme gff3 par GenomeTools sort
@@ -90,5 +90,5 @@ echo "Check clariTE_gff3 validity for ${chrom}"
 gt gff3validator $OUTPUT/Lo7_RefSeq_${chr}_clariTE_friendly.gff3
 
 
-rm $OUTPUT/${chrom}/${chrom}.fasta $OUTPUT/${chrom}/${chrom}.fasta.fai $OUTPUT/${chrom}/${chrom}.windows.fasta $OUTPUT/${chrom}/${chrom}.windows.bed
+rm ${chrom}.fasta ${chrom}.fasta.fai ${chrom}.windows.fasta ${chrom}.windows.bed
 
