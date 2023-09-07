@@ -14,7 +14,7 @@ A shell pipeline for TE annotation working on HPC cluster (slurm) with job depen
 ### CLARI-TE_ smk
 
 A snakemake pipeline for TE annotation working on HPC cluster (slurm).  
-Are required: gcc/8.1.0  python/3.7.1 snakemake/5.25.0  
+Are required: gcc/8.1.0,   python/3.7.1,  snakemake/5.25.0  
 
 Fill in the "config.yml" file with your own genome informations, and the library that RepeatMasker will use if you desire to use another one.  
 Eventually custom the cluster parameters in "hpc2_ressources.json" file according to the HPC cluster used.  
@@ -26,7 +26,6 @@ snakemake --use-conda -j 20 --cluster-config hpc2_ressources.json --cluster --la
 
 A visualization of the rules executed by the smk pipeline:
 ![rulegraph](rulegraph.png)
-
 
 ## Results  
 

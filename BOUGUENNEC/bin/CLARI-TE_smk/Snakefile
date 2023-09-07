@@ -3,6 +3,7 @@ configfile: "config.yml"
 onsuccess:
     print("Workflow finished, no error")
 
+LG = ["1R", "2R", "3R", "4R", "5R", "6R", "7R", "Un"]
 CHROM = ["chr1R", "chr2R", "chr3R", "chr4R", "chr5R", "chr6R", "chr7R", "chrUn"]
 
 
@@ -16,7 +17,7 @@ onstart:
 
 rule all:
     input:
-        expand("results/{chrom}/{chrom}.gff3", chrom=CHROM),
+        expand("results/{lg}/{chrom}.gff3", chrom=CHROM, lg=LG),
         config['TeIDsPrefix']+'clariTE.gff3'
 
 
@@ -51,7 +52,7 @@ rule check_gff3:
 rule embl_to_gff3:
     output:
         "results/{chrom}/{chrom}.gff3"
-    input: ID = glob_wildcards("results/{chrom}/{chrom}.{id}.fa.out_anno.embl")
+    input: ID = glob_wildcards("results/{lg}/{chrom}.{id}.fa.out_anno.embl")
     conda:
         "env.yml"
     shell:
