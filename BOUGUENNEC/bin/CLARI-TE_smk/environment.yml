@@ -1,0 +1,13 @@
+name: env-RMclariTE
+channels:
+ - bioconda
+ - conda-forge
+dependencies:
+ - samtools=1.16
+ - bedtools=2.27
+ - exonerate=2.4
+ - genometools-genometools=1.5
+ - RepeatMasker=4.0
+ - perl-bioperl=1.7
+ - perl-getopt-long
+ - perl-data-dumper

@@ -1,9 +1,10 @@
 {
 	"__default__" :
 	{
-		"time" : "05:00:00",
-		"c" : 1,
+		"time" : "10:00:00",
 		"partition" : "normal",
+		"nodes" : 1,
+		"cpu" : 1,
 		"mem" : "8G",
 		"jobName" : "clariTEannot_{rule}",
 		"error" : "slurm-%x-%J.log",
@@ -15,7 +16,7 @@
 	},
 	"check_gff3":
 	{
-		"time" : "00:10:00"
+		"time" : "00:20:00"
 	},
 	"embl_to_gff3":
 	{
@@ -23,15 +24,14 @@
 	},
 	"clariTE":
 	{
-		"time" : "03:00:00",
-		"c" : 1,
+		"time" : "01:00:00",
 		"partition" : "gdec",
-		"mem" : "816"
+		"mem" : "16G"
 	},
 	"repeatmasker":
 	{
-		"time" : "05:00:00",
-		"c" : 16,
+		"time" : "10:00:00",
+		"cpu" : 16,
 		"partition" : "gdec",
 		"mem" : "16G"
 	},
