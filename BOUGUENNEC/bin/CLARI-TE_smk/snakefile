@@ -1,19 +1,18 @@
 configfile: "config.yml"
 
-onsuccess:
-    print("Workflow finished, no error")
-
 LG = ["1R", "2R", "3R", "4R", "5R", "6R", "7R", "Un"]
 CHROM = ["chr1R", "chr2R", "chr3R", "chr4R", "chr5R", "chr6R", "chr7R", "chrUn"]
-ID = expand(glob_wildcards("results/{lg}/{chrom}.{id}.fa", chrom=CHROM, lg=LG))
+
+onsuccess:
+    print("Workflow finished with no error")
 
 onstart:
     print("##### ClariTE annotation Workflow #####\n") 
     print("## Creating output folders ##\n")
     shell('mkdir -p logs')
-    shell('mkdir -p logs/expand("{lg}", lg=LG)"')
+    shell('mkdir -p logs/{wildcards.lg}')
     shell('mkdir -p results')
-    shell('mkdir -p results/expand("{lg}", lg=LG)"')
+    shell('mkdir -p results/{wildcards.lg}')
 
 
 rule all:
@@ -23,20 +22,21 @@ rule all:
         expand("results/{lg}/{chrom}.fasta.fai", chrom=CHROM, lg=LG),
         expand("results/{lg}/{chrom}.windows.bed", chrom=CHROM, lg=LG),
         expand("results/{lg}/{chrom}.windows.fasta", chrom=CHROM, lg=LG),
-        config['TeIDsPrefix']+'clariTE.gff3',
-        expand("results/{lg}/{chrom}.{id}.fa", chrom=CHROM, lg=LG, id=ID),
+        #expand("results/{lg}/{chrom}.{id}.fa", chrom=CHROM, lg=LG),
         #expand("results/{lg}/{chrom}.{id}.fa.out.xm", chrom=CHROM, lg=LG),
         #expand("results/{lg}/{chrom}.{id}.fa.out_anno.embl", chrom=CHROM, lg=LG),
-        expand("results/{lg}/{chrom}_gff3validator.log", chrom=CHROM, lg=LG)
+        expand("results/{lg}/{chrom}_clariTE.gff3", chrom=CHROM, lg=LG),
+        expand("results/{lg}/{chrom}_gff3validator.log", chrom=CHROM, lg=LG),
+        "results/"+config['TeIDsPrefix']+"clariTE.gff3"
 
 
 rule merge_chrom_gff3:
     output:
-        config['TeIDsPrefix']+'clariTE.gff3'
+        "results/"+config['TeIDsPrefix']+"clariTE.gff3"
     input:
-        expand("results/{lg}/{chrom}.gff3", chrom=CHROM, lg=LG)
+        expand("results/{lg}/{chrom}_clariTE.gff3", chrom=CHROM, lg=LG)
     log:
-        err="logs/gt_gff3_tidy.err"
+        err="logs/"+config['TeIDsPrefix']+"gt_gff3_tidy.err"
     conda:
         "environment.yml"
     shell: "gt gff3 -sort -tidy -retainids {input} 1> {output} 2> {log.err}" 
@@ -46,7 +46,7 @@ rule check_gff3:
     output:
         "results/{lg}/{chrom}_gff3validator.log"
     input:
-        "results/{lg}/{chrom}.gff3"
+        "results/{lg}/{chrom}_clariTE.gff3"
     log:
         "logs/{lg}/{chrom}_gt_gff3validator.err"
     conda:
@@ -59,7 +59,7 @@ rule check_gff3:
 
 rule embl_to_gff3:
     output:
-        "results/{lg}/{chrom}.gff3"
+        "results/{lg}/{chrom}_clariTE.gff3"
     input:
         EMBL = glob_wildcards("results/{lg}/{chrom}.{id}.fa.out_anno.embl"),
         FASTA = config['genomeFasta']
@@ -91,7 +91,7 @@ rule repeatmasker:
     output:
         XM = glob_wildcards("results/{lg}/{chrom}.{id}.fa.out.xm")
     input:
-        ID = glob_wildcards("results/{lg}/{chrom}.{id}.fa")
+        glob_wildcards("results/{lg}/{chrom}.{id}.fa")
     threads: 16
     conda:
         "environment.yml"
@@ -104,22 +104,23 @@ rule repeatmasker:
 
 rule chunks_fasta:
     output:
-        ID = glob_wildcards("results/{lg}/{chrom}.{id}.fa")
+        glob_wildcards("results/{lg}/{chrom}.{id}.fa")
     input: 
         "results/{lg}/{chrom}.windows.fasta"
     conda:
         "environment.yml"
-    shell: "fastaexplode -f {input} -d results/{lg}"
+    shell: "fastaexplode -f {input} -d results/{wildcards.lg}"
 
 
 rule chunks_multi_fasta:
     output:
         "results/{lg}/{chrom}.windows.fasta"
     input:
-        "results/{lg}/{chrom}.windows.bed"
+        bed="results/{lg}/{chrom}.windows.bed",
+        fasta="results/{lg}/{chrom}.fasta"
     conda:
         "environment.yml"
-    shell: "bedtools getfasta -bed {input} -fi results/{lg}/{chrom}.fasta > {output}"
+    shell: "bedtools getfasta -bed {input.bed} -fi {input.fasta} > {output}"
 
 
 rule chunks_bed:
@@ -149,7 +150,7 @@ rule chrom_fasta:
         config["genomeFasta"]
     conda:
         "environment.yml"
-    shell: "samtools faidx {input} {chrom} > {output}"
+    shell: "samtools faidx {input} {wildcards.chrom} > {output}"
 
 
 rule genome_fai:
