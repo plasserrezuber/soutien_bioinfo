@@ -1,0 +1,162 @@
+configfile: "config.yml"
+
+onsuccess:
+    print("Workflow finished, no error")
+
+LG = ["1R", "2R", "3R", "4R", "5R", "6R", "7R", "Un"]
+CHROM = ["chr1R", "chr2R", "chr3R", "chr4R", "chr5R", "chr6R", "chr7R", "chrUn"]
+ID = expand(glob_wildcards("results/{lg}/{chrom}.{id}.fa", chrom=CHROM, lg=LG))
+
+onstart:
+    print("##### ClariTE annotation Workflow #####\n") 
+    print("## Creating output folders ##\n")
+    shell('mkdir -p logs')
+    shell('mkdir -p logs/expand("{lg}", lg=LG)"')
+    shell('mkdir -p results')
+    shell('mkdir -p results/expand("{lg}", lg=LG)"')
+
+
+rule all:
+    input:
+        config["genomeFasta"]+".fai",
+        expand("results/{lg}/{chrom}.fasta", chrom=CHROM, lg=LG),
+        expand("results/{lg}/{chrom}.fasta.fai", chrom=CHROM, lg=LG),
+        expand("results/{lg}/{chrom}.windows.bed", chrom=CHROM, lg=LG),
+        expand("results/{lg}/{chrom}.windows.fasta", chrom=CHROM, lg=LG),
+        config['TeIDsPrefix']+'clariTE.gff3',
+        expand("results/{lg}/{chrom}.{id}.fa", chrom=CHROM, lg=LG, id=ID),
+        #expand("results/{lg}/{chrom}.{id}.fa.out.xm", chrom=CHROM, lg=LG),
+        #expand("results/{lg}/{chrom}.{id}.fa.out_anno.embl", chrom=CHROM, lg=LG),
+        expand("results/{lg}/{chrom}_gff3validator.log", chrom=CHROM, lg=LG)
+
+
+rule merge_chrom_gff3:
+    output:
+        config['TeIDsPrefix']+'clariTE.gff3'
+    input:
+        expand("results/{lg}/{chrom}.gff3", chrom=CHROM, lg=LG)
+    log:
+        err="logs/gt_gff3_tidy.err"
+    conda:
+        "environment.yml"
+    shell: "gt gff3 -sort -tidy -retainids {input} 1> {output} 2> {log.err}" 
+
+
+rule check_gff3:
+    output:
+        "results/{lg}/{chrom}_gff3validator.log"
+    input:
+        "results/{lg}/{chrom}.gff3"
+    log:
+        "logs/{lg}/{chrom}_gt_gff3validator.err"
+    conda:
+        "environment.yml"
+    shell:
+        """
+        gt gff3validator {input} 1> {output} 2> {log}
+        """
+
+
+rule embl_to_gff3:
+    output:
+        "results/{lg}/{chrom}.gff3"
+    input:
+        EMBL = glob_wildcards("results/{lg}/{chrom}.{id}.fa.out_anno.embl"),
+        FASTA = config['genomeFasta']
+    params:
+        config['TeIDsPrefix']
+    conda:
+        "environment.yml"
+    shell:
+        """
+        bin/embl_to_gff3.sh {wildcards.chrom} {input.FASTA} {params}
+        """
+
+
+rule clariTE:
+    output:
+        glob_wildcards("results/{lg}/{chrom}.{id}.fa.out_anno.embl")
+    input:
+        fasta = glob_wildcards("results/{lg}/{chrom}.{id}.fa"),
+        XM = glob_wildcards("results/{lg}/{chrom}.{id}.fa.out.xm")
+    conda: "perl-bioperl=1.7"
+    shell:
+        """
+        sed -i 's/#Unspecified/#Unknown/' {input.xm}
+        bin/clariTE_1.0/bin/clariTE.pl -dir results/{lg}/ -LTR bin/CLARIwheat.LTR_position -classi bin/CLARIwheat.classification -fasta {input.fasta} {input.XM}
+        """
+
+
+rule repeatmasker:
+    output:
+        XM = glob_wildcards("results/{lg}/{chrom}.{id}.fa.out.xm")
+    input:
+        ID = glob_wildcards("results/{lg}/{chrom}.{id}.fa")
+    threads: 16
+    conda:
+        "environment.yml"
+    shell:
+        """
+        RepeatMasker -e crossmatch -lib config['clariTElib'] -xsmall -nolow -xm -pa {threads} -q {input}
+        rm {input}.cat {input}.log {input}.masked {input}.ori.out {input}.out {input}.tbl
+        """
+
+
+rule chunks_fasta:
+    output:
+        ID = glob_wildcards("results/{lg}/{chrom}.{id}.fa")
+    input: 
+        "results/{lg}/{chrom}.windows.fasta"
+    conda:
+        "environment.yml"
+    shell: "fastaexplode -f {input} -d results/{lg}"
+
+
+rule chunks_multi_fasta:
+    output:
+        "results/{lg}/{chrom}.windows.fasta"
+    input:
+        "results/{lg}/{chrom}.windows.bed"
+    conda:
+        "environment.yml"
+    shell: "bedtools getfasta -bed {input} -fi results/{lg}/{chrom}.fasta > {output}"
+
+
+rule chunks_bed:
+    output:
+        "results/{lg}/{chrom}.windows.bed"
+    input:
+        "results/{lg}/{chrom}.fasta.fai"
+    conda:
+        "environment.yml"
+    shell: "bedtools makewindows -g {input} -w 10000000 > {output}"
+
+
+rule chrom_fai:
+    output:
+        "results/{lg}/{chrom}.fasta.fai"
+    input:
+        "results/{lg}/{chrom}.fasta"
+    conda:
+        "environment.yml"
+    shell: "samtools faidx {input}"
+
+
+rule chrom_fasta:
+    output:
+        "results/{lg}/{chrom,[A-Za-z0-9]+}.fasta"
+    input:
+        config["genomeFasta"]
+    conda:
+        "environment.yml"
+    shell: "samtools faidx {input} {chrom} > {output}"
+
+
+rule genome_fai:
+    output:
+        config["genomeFasta"]+".fai"
+    input:
+        config["genomeFasta"]
+    conda:
+        "environment.yml"
+    shell: "samtools faidx {input}"

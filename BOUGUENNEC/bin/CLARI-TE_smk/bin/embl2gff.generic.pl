@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-my $VERSION = '2.1';
-my $lastmodif = '2021-3-5';
+my $VERSION = '2.2';
+my $lastmodif = '2023-9-7 by Lasserre-Zuber P.';
 
 use strict;
 use warnings;
