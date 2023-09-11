@@ -29,7 +29,7 @@ snakemake --use-conda -j 20 --cluster-config hpc2_ressources.json --latency-wait
 ```
 
 A visualization of the rules executed by the smk pipeline:
-![rulegraph](CLARI-TE_smk/rulegraph.png)
+![rulegraph](rulegraph.png)
 
 ## Results  
 
