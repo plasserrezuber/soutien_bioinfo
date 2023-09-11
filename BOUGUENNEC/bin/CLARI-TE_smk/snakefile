@@ -17,16 +17,6 @@ onstart:
 
 rule all:
     input:
-        # config["genomeFasta"]+".fai",
-        # expand("results/{lg}/{chrom}.fasta", chrom=CHROM, lg=LG),
-        # expand("results/{lg}/{chrom}.fasta.fai", chrom=CHROM, lg=LG),
-        # expand("results/{lg}/{chrom}.windows.bed", chrom=CHROM, lg=LG),
-        # expand("results/{lg}/{chrom}.windows.fasta", chrom=CHROM, lg=LG),
-        # expand("results/{lg}/{chrom}_chunks_fa_list.txt", chrom=CHROM, lg=LG),
-        # expand("results/{lg}/{chrom}_chunks_xm_list.txt", chrom=CHROM, lg=LG),
-        # expand("results/{lg}/{chrom}_chunks_embl_list.txt", chrom=CHROM, lg=LG),
-        # expand("results/{lg}/{chrom}_clariTE.gff3", chrom=CHROM, lg=LG),
-        # expand("results/{lg}/{chrom}_gff3validator.log", chrom=CHROM, lg=LG),
         "results/"+config['TeIDsPrefix']+"clariTE.gff3"
 
 
@@ -159,7 +149,8 @@ rule chrom_fasta:
     output:
         "results/{lg}/{chrom,[A-Za-z0-9]+}.fasta"
     input:
-        config["genomeFasta"]
+        gefa = config["genomeFasta"],
+        fefai = config["genomeFasta"]+".fai"
     conda:
         "environment.yml"
     shell: "samtools faidx {input} {wildcards.chrom} > {output}"
