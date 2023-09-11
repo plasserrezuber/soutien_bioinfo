@@ -75,8 +75,8 @@ rule clariTE:
     conda: "perl-bioperl=1.7"
     shell:
         """
-        sed -i 's/#Unspecified/#Unknown/' {input.xm}
-        bin/clariTE_1.0/bin/clariTE.pl -dir results/{lg}/ -LTR bin/CLARIwheat.LTR_position -classi bin/CLARIwheat.classification -fasta {input.fasta} {input.XM}
+        sed -i 's/#Unspecified/#Unknown/' {input.XM}
+        bin/clariTE_1.0/bin/clariTE.pl -dir results/{wildcards.lg}/ -LTR bin/CLARIwheat.LTR_position -classi bin/CLARIwheat.classification -fasta {input.fasta} {input.XM}
         sed 's/fa.out.xm/fa.out_anno.embl/g' {input.XMl} > {output.EMBLl}
         """
 

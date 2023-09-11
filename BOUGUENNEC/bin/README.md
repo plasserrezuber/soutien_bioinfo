@@ -28,7 +28,7 @@ To launch the smk pipeline:
 snakemake --use-conda -j 20 --cluster-config hpc2_ressources.json --latency-wait 30
 ```
 
-A visualization of the rules executed by the smk pipeline:
+A visualization of the rules executed by the smk pipeline:  
 ![rulegraph](rulegraph.png)
 
 ## Results  
