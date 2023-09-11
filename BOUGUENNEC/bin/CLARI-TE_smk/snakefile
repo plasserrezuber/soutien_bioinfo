@@ -17,16 +17,16 @@ onstart:
 
 rule all:
     input:
-        config["genomeFasta"]+".fai",
-        expand("results/{lg}/{chrom}.fasta", chrom=CHROM, lg=LG),
-        expand("results/{lg}/{chrom}.fasta.fai", chrom=CHROM, lg=LG),
-        expand("results/{lg}/{chrom}.windows.bed", chrom=CHROM, lg=LG),
-        expand("results/{lg}/{chrom}.windows.fasta", chrom=CHROM, lg=LG),
-        #expand("results/{lg}/{chrom}.{id}.fa", chrom=CHROM, lg=LG),
-        #expand("results/{lg}/{chrom}.{id}.fa.out.xm", chrom=CHROM, lg=LG),
-        #expand("results/{lg}/{chrom}.{id}.fa.out_anno.embl", chrom=CHROM, lg=LG),
-        expand("results/{lg}/{chrom}_clariTE.gff3", chrom=CHROM, lg=LG),
-        expand("results/{lg}/{chrom}_gff3validator.log", chrom=CHROM, lg=LG),
+        # config["genomeFasta"]+".fai",
+        # expand("results/{lg}/{chrom}.fasta", chrom=CHROM, lg=LG),
+        # expand("results/{lg}/{chrom}.fasta.fai", chrom=CHROM, lg=LG),
+        # expand("results/{lg}/{chrom}.windows.bed", chrom=CHROM, lg=LG),
+        # expand("results/{lg}/{chrom}.windows.fasta", chrom=CHROM, lg=LG),
+        # expand("results/{lg}/{chrom}_chunks_fa_list.txt", chrom=CHROM, lg=LG),
+        # expand("results/{lg}/{chrom}_chunks_xm_list.txt", chrom=CHROM, lg=LG),
+        # expand("results/{lg}/{chrom}_chunks_embl_list.txt", chrom=CHROM, lg=LG),
+        # expand("results/{lg}/{chrom}_clariTE.gff3", chrom=CHROM, lg=LG),
+        # expand("results/{lg}/{chrom}_gff3validator.log", chrom=CHROM, lg=LG),
         "results/"+config['TeIDsPrefix']+"clariTE.gff3"
 
 
@@ -61,8 +61,9 @@ rule embl_to_gff3:
     output:
         "results/{lg}/{chrom}_clariTE.gff3"
     input:
-        EMBL = glob_wildcards("results/{lg}/{chrom}.{id}.fa.out_anno.embl"),
-        FASTA = config['genomeFasta']
+        EMBL = glob_wildcards("results/{lg}/{chrom}:{id}.fa.out_anno.embl"),
+        FASTA = config['genomeFasta'],
+        EMBLl="results/{lg}/{chrom}_chunks_embl_list.txt"
     params:
         config['TeIDsPrefix']
     conda:
@@ -75,23 +76,28 @@ rule embl_to_gff3:
 
 rule clariTE:
     output:
-        glob_wildcards("results/{lg}/{chrom}.{id}.fa.out_anno.embl")
+        EMBL = glob_wildcards("results/{lg}/{chrom}:{id}.fa.out_anno.embl"),
+        EMBLl="results/{lg}/{chrom}_chunks_embl_list.txt"
     input:
-        fasta = glob_wildcards("results/{lg}/{chrom}.{id}.fa"),
-        XM = glob_wildcards("results/{lg}/{chrom}.{id}.fa.out.xm")
+        fasta = glob_wildcards("results/{lg}/{chrom}:{id}.fa"),
+        XM = glob_wildcards("results/{lg}/{chrom}:{id}.fa.out.xm"),
+        XMl = "results/{lg}/{chrom}_chunks_xm_list.txt"
     conda: "perl-bioperl=1.7"
     shell:
         """
         sed -i 's/#Unspecified/#Unknown/' {input.xm}
         bin/clariTE_1.0/bin/clariTE.pl -dir results/{lg}/ -LTR bin/CLARIwheat.LTR_position -classi bin/CLARIwheat.classification -fasta {input.fasta} {input.XM}
+        sed 's/fa.out.xm/fa.out_anno.embl/g' {input.XMl} > {output.EMBLl}
         """
 
 
 rule repeatmasker:
     output:
-        XM = glob_wildcards("results/{lg}/{chrom}.{id}.fa.out.xm")
+        XM = glob_wildcards("results/{lg}/{chrom}:{id}.fa.out.xm"),
+        XMl = "results/{lg}/{chrom}_chunks_xm_list.txt"
     input:
-        glob_wildcards("results/{lg}/{chrom}.{id}.fa")
+        ID = glob_wildcards("results/{lg}/{chrom}:{id}.fa"),
+        IDl = "results/{lg}/{chrom}_chunks_fa_list.txt"
     threads: 16
     conda:
         "environment.yml"
@@ -99,17 +105,23 @@ rule repeatmasker:
         """
         RepeatMasker -e crossmatch -lib config['clariTElib'] -xsmall -nolow -xm -pa {threads} -q {input}
         rm {input}.cat {input}.log {input}.masked {input}.ori.out {input}.out {input}.tbl
+        sed 's/fa/fa.out.xm/g' {input.IDl} > {output.XMl}
         """
 
 
 rule chunks_fasta:
     output:
-        glob_wildcards("results/{lg}/{chrom}.{id}.fa")
+        ID= glob_wildcards("results/{lg}/{chrom}:{id}.fa"),
+        IDl = "results/{lg}/{chrom}_chunks_fa_list.txt"
     input: 
         "results/{lg}/{chrom}.windows.fasta"
     conda:
         "environment.yml"
-    shell: "fastaexplode -f {input} -d results/{wildcards.lg}"
+    shell:
+        """
+        fastaexplode -f {input} -d results/{wildcards.lg}
+        fgrep '>' {input} |sed 's/>//' |tr '\n' ' ' |sed 's/ /.fa /g' > {output.IDl}
+        """
 
 
 rule chunks_multi_fasta:
