@@ -24,23 +24,26 @@ module load gcc/8.1.0 python/3.7.1 snakemake/5.25.0
 ```
 
 Fill in the "config.yml" file with your own genome informations, and the library that RepeatMasker will use if you desire to use another one.  
-Eventually custom the cluster parameters in "hpc2_ressources.json" file according to the HPC cluster used.  
+Eventually custom the cluster parameters in "cluster.json" file according to the HPC cluster used.  
 
 At first, it is recommended to make a dry-run (code test without execution) of the analysis.  
 This will check all the rules and the parameters in the config.yaml file and print all the command lines which would have been executed.  
 ```console
-snakemake -nrp --use-conda -j 20 --cluster-config hpc2_ressources.json
+snakemake -nrp --use-conda -j 20 --cluster-config cluster.json
 ```
 
 To have a view of the workflow and its successive rules:  
 ```console
 snakemake --rulegraph > rulegraph.dot
 ```
+
+You can then convert the .dot in .png with [Graphviz](https://dreampuf.github.io/GraphvizOnline)  
+
 Flowchart:  
 ![rulegraph](rulegraph.png)
 
 The pipeline comes with conda environment file which can be used by Snakemake with the option --use-conda.  
-This workflow is built to be parallelized on HPC cluster and paramaters of calculs are setup for each rule by the hpc2_ressources.json file.  
+This workflow is built to be parallelized on HPC cluster and paramaters of calculs are setup for each rule by the cluster.json file.  
 The -j option will allow to have at most 20 subproccess run through the SLURM scheduler.  
 To visualize the diagram of the parallelized processes, you can run the following command:  
 ```console
@@ -49,9 +52,10 @@ snakemake --dag > dag.dot
 Diagram:  
 ![dag](dag.png)
 
+The --latency-wait option will permit to deal with busy clusters:
 To launch the smk pipeline:  
 ```console
-snakemake --use-conda -j 20 --cluster-config hpc2_ressources.json --latency-wait 30
+snakemake --use-conda -j 20 --cluster-config cluster.json --latency-wait 45 --cluster "sbatch --parsable -p {cluster.partition} -c {cluster.cpu} -N {cluster.nodes} --mem= {cluster.mem} -t {cluster.time} --job-name={cluster.jobName} -o logs/{cluster.output} -e logs/{cluster.error}"
 ```
 
 ## Results  

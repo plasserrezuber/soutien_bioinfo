@@ -1,0 +1,62 @@
+{
+	"__default__" :
+	{
+		"time" : "10:00:00",
+		"partition" : "normal",
+		"nodes" : 1,
+		"cpu" : 1,
+		"mem" : "8G",
+		"jobName" : "clariTEannot_{rule}",
+		"error" : "slurm-%x-%J.log",
+		"output" : "slurm-%x-%J.log"
+	},
+	"merge_chrom_gff3" :
+	{
+		"time" : "01:00:00"
+	},
+	"check_gff3":
+	{
+		"time" : "00:20:00"
+	},
+	"embl_to_gff3":
+	{
+		"time" : "01:00:00"
+	},
+	"clariTE":
+	{
+		"time" : "01:00:00",
+		"partition" : "gdec",
+		"mem" : "16G"
+	},
+	"repeatmasker":
+	{
+		"time" : "10:00:00",
+		"cpu" : 16,
+		"partition" : "gdec",
+		"mem" : "16G"
+	},
+	"chunks_fasta":
+	{
+        "time": "00:30:00"
+	},
+	"chunks_multi_fasta":
+	{
+		"time" : "00:30:00"
+	},
+    "chunks_bed":
+	{
+		"time" : "00:30:00"
+	},
+    "chrom_fai":
+	{
+		"time" : "00:10:00"
+	},
+    "chrom_fasta":
+	{
+		"time" : "00:10:00"
+	},
+    "genome_fai":
+	{
+		"time" : "00:10:00"
+	}
+}

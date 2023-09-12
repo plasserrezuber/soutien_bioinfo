@@ -8,7 +8,7 @@ embl_files=$(cat results/chrom/${1}_chunks_embl_list.txt)
 
 #option -note: Convert all tags/values to a single tag Note="tag:xxx; tag:xxx; tag:xxx"
 #option -l <interger>: Length threshold to skip small features [default: 1 bp]
-bin/embl2gff.generic.pl -RMclariTE -featurePrefix $3 -source clariTE -note -l 10 $embl_files > results/${1}_clariTE.gff
+bin/embl2gff.generic.pl -RMclariTE -featurePrefix $2 -source clariTE -note -l 10 $embl_files > results/${1}_clariTE.gff
 
 ###### gff to gff3: new coordinates calculation with gawk commands "match" + "substr" (from chunks relative to chrom relative)
 grep -v $'\t''region' results/${1}_clariTE.gff \
@@ -16,7 +16,7 @@ grep -v $'\t''region' results/${1}_clariTE.gff \
 |gt gff3 -sort -tidy -retainids 1> results/${1}_clariTE_tmp.gff3  2> logs/${1}_clariTE_tmp_gt.log
 
 ### variable $endchrom to give the right sequence-region coordinate in gff3
-endchrom=$(grep ${1} ${2}.fai |cut -f2)
+endchrom=$(grep ${1} results/genome.fasta.fai |cut -f2)
 
 # grep -v command keeps only one "sequence-region" line starting with zero coordinate
 # gawk and sed commands to format in a more friendly way

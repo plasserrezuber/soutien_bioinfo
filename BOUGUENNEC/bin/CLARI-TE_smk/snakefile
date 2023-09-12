@@ -1,8 +1,7 @@
 configfile: "config.yml"
 print("Config is: ", config)
 
-#LG = ["1R", "2R", "3R", "4R", "5R", "6R", "7R", "Un"]
-CHROM = ["chr1R", "chr2R", "chr3R", "chr4R", "chr5R", "chr6R", "chr7R", "chrUn"]
+CHROM = config['chromList']
 
 onsuccess:
     print("Workflow finished with no error")
@@ -53,7 +52,6 @@ rule embl_to_gff3:
         "results/chrom/{chrom}_clariTE.gff3"
     input:
         EMBL = glob_wildcards("results/chrom/{chrom}:{id}.fa.out_anno.embl"),
-        FASTA = config['genomeFasta'],
         EMBLl="results/chrom/{chrom}_chunks_embl_list.txt"
     params:
         config['TeIDsPrefix']
@@ -61,7 +59,7 @@ rule embl_to_gff3:
         "environment.yml"
     shell:
         """
-        bin/embl_to_gff3.sh {wildcards.chrom} {input.FASTA} {params}
+        bin/embl_to_gff3.sh {wildcards.chrom} {params}
         """
 
 
@@ -95,8 +93,8 @@ rule repeatmasker:
         "environment.yml"
     shell:
         """
-        RepeatMasker -e crossmatch -lib config['clariTElib'] -xsmall -nolow -xm -pa {threads} -q {input}
-        rm {input}.cat {input}.log {input}.masked {input}.ori.out {input}.out {input}.tbl
+        RepeatMasker -e crossmatch -lib config['clariTElib'] -xsmall -nolow -xm -pa {threads} -q {input.ID}
+        rm {input.ID}.cat {input.ID}.log {input.ID}.masked {input.ID}.ori.out {input.ID}.out {input.ID}.tbl
         sed 's/fa/fa.out.xm/g' {input.IDl} > {output.XMl}
         """
 
@@ -151,18 +149,23 @@ rule chrom_fasta:
     output:
         "results/chrom/{chrom,[A-Za-z0-9]+}.fasta"
     input:
-        gefa = config["genomeFasta"],
-        fefai = config["genomeFasta"]+".fai"
+        gefa = "results/genome.fasta",
+        fafai = "results/genome.fasta.fai"
     conda:
         "environment.yml"
-    shell: "samtools faidx {input} {wildcards.chrom} > {output}"
+    shell: "samtools faidx {input.gefa} {wildcards.chrom} > {output}"
 
 
 rule genome_fai:
     output:
-        config["genomeFasta"]+".fai"
+        gefa = "results/genome.fasta",
+        fafai = "results/genome.fasta.fai"
     input:
-        config["genomeFasta"]
+        config['genomeFasta']
     conda:
         "environment.yml"
-    shell: "samtools faidx {input}"
+    shell:
+        """
+        ln -s {input} {output.gefa}
+        samtools faidx {output.gefa}
+        """
