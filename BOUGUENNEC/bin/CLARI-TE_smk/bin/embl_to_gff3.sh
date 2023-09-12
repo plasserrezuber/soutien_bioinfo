@@ -4,7 +4,7 @@
 ## NB: script embl2gff.generic.pl gives an ID per TE per chrom (not per chunk) from zero if a list of ordered files for all chunks is given for each chrom
 ## That is why the $embl_files variable is created before
 
-embl_files=$(cat results/*/${1}_chunks_embl_list.txt)
+embl_files=$(cat results/chrom/${1}_chunks_embl_list.txt)
 
 #option -note: Convert all tags/values to a single tag Note="tag:xxx; tag:xxx; tag:xxx"
 #option -l <interger>: Length threshold to skip small features [default: 1 bp]

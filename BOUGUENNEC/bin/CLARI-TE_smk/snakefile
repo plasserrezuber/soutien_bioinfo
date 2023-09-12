@@ -1,7 +1,7 @@
 configfile: "config.yml"
 print("Config is: ", config)
 
-LG = ["1R", "2R", "3R", "4R", "5R", "6R", "7R", "Un"]
+#LG = ["1R", "2R", "3R", "4R", "5R", "6R", "7R", "Un"]
 CHROM = ["chr1R", "chr2R", "chr3R", "chr4R", "chr5R", "chr6R", "chr7R", "chrUn"]
 
 onsuccess:
@@ -11,9 +11,9 @@ onstart:
     print("##### ClariTE annotation Workflow #####\n") 
     print("## Creating output folders ##\n")
     shell('mkdir -p logs')
-    shell('mkdir -p logs/{wildcards.lg}')
+    shell('mkdir -p logs/chrom')
     shell('mkdir -p results')
-    shell('mkdir -p results/{wildcards.lg}')
+    shell('mkdir -p results/chrom')
 
 
 rule all:
@@ -25,7 +25,7 @@ rule merge_chrom_gff3:
     output:
         "results/"+config['TeIDsPrefix']+"clariTE.gff3"
     input:
-        expand("results/{lg}/{chrom}_clariTE.gff3", chrom=CHROM, lg=LG)
+        expand("results/chrom/{chrom}_clariTE.gff3", chrom=CHROM)
     log:
         err="logs/"+config['TeIDsPrefix']+"gt_gff3_tidy.err"
     conda:
@@ -35,11 +35,11 @@ rule merge_chrom_gff3:
 
 rule check_gff3:
     output:
-        "results/{lg}/{chrom}_gff3validator.log"
+        "results/chrom/{chrom}_gff3validator.log"
     input:
-        "results/{lg}/{chrom}_clariTE.gff3"
+        "results/chrom/{chrom}_clariTE.gff3"
     log:
-        "logs/{lg}/{chrom}_gt_gff3validator.err"
+        "logs/chrom/{chrom}_gt_gff3validator.err"
     conda:
         "environment.yml"
     shell:
@@ -50,11 +50,11 @@ rule check_gff3:
 
 rule embl_to_gff3:
     output:
-        "results/{lg}/{chrom}_clariTE.gff3"
+        "results/chrom/{chrom}_clariTE.gff3"
     input:
-        EMBL = glob_wildcards("results/{lg}/{chrom}:{id}.fa.out_anno.embl"),
+        EMBL = glob_wildcards("results/chrom/{chrom}:{id}.fa.out_anno.embl"),
         FASTA = config['genomeFasta'],
-        EMBLl="results/{lg}/{chrom}_chunks_embl_list.txt"
+        EMBLl="results/chrom/{chrom}_chunks_embl_list.txt"
     params:
         config['TeIDsPrefix']
     conda:
@@ -67,29 +67,29 @@ rule embl_to_gff3:
 
 rule clariTE:
     output:
-        EMBL = glob_wildcards("results/{lg}/{chrom}:{id}.fa.out_anno.embl"),
-        EMBLl="results/{lg}/{chrom}_chunks_embl_list.txt"
+        EMBL = glob_wildcards("results/chrom/{chrom}:{id}.fa.out_anno.embl"),
+        EMBLl="results/chrom/{chrom}_chunks_embl_list.txt"
     input:
-        fasta = glob_wildcards("results/{lg}/{chrom}:{id}.fa"),
-        XM = glob_wildcards("results/{lg}/{chrom}:{id}.fa.out.xm"),
-        XMl = "results/{lg}/{chrom}_chunks_xm_list.txt"
+        fasta = glob_wildcards("results/chrom/{chrom}:{id}.fa"),
+        XM = glob_wildcards("results/chrom/{chrom}:{id}.fa.out.xm"),
+        XMl = "results/chrom/{chrom}_chunks_xm_list.txt"
     conda:
         "environment.yml"
     shell:
         """
         sed -i 's/#Unspecified/#Unknown/' {input.XM}
-        bin/clariTE_1.0/bin/clariTE.pl -dir results/{wildcards.lg}/ -LTR bin/CLARIwheat.LTR_position -classi bin/CLARIwheat.classification -fasta {input.fasta} {input.XM}
+        bin/clariTE_1.0/bin/clariTE.pl -dir results/chrom/ -LTR bin/CLARIwheat.LTR_position -classi bin/CLARIwheat.classification -fasta {input.fasta} {input.XM}
         sed 's/fa.out.xm/fa.out_anno.embl/g' {input.XMl} > {output.EMBLl}
         """
 
 
 rule repeatmasker:
     output:
-        XM = glob_wildcards("results/{lg}/{chrom}:{id}.fa.out.xm"),
-        XMl = "results/{lg}/{chrom}_chunks_xm_list.txt"
+        XM = glob_wildcards("results/chrom/{chrom}:{id}.fa.out.xm"),
+        XMl = "results/chrom/{chrom}_chunks_xm_list.txt"
     input:
-        ID = glob_wildcards("results/{lg}/{chrom}:{id}.fa"),
-        IDl = "results/{lg}/{chrom}_chunks_fa_list.txt"
+        ID = glob_wildcards("results/chrom/{chrom}:{id}.fa"),
+        IDl = "results/chrom/{chrom}_chunks_fa_list.txt"
     threads: 16
     conda:
         "environment.yml"
@@ -103,25 +103,25 @@ rule repeatmasker:
 
 rule chunks_fasta:
     output:
-        ID= glob_wildcards("results/{lg}/{chrom}:{id}.fa"),
-        IDl = "results/{lg}/{chrom}_chunks_fa_list.txt"
+        ID= glob_wildcards("results/chrom/{chrom}:{id}.fa"),
+        IDl = "results/chrom/{chrom}_chunks_fa_list.txt"
     input: 
-        "results/{lg}/{chrom}.windows.fasta"
+        "results/chrom/{chrom}.windows.fasta"
     conda:
         "environment.yml"
     shell:
         """
-        fastaexplode -f {input} -d results/{wildcards.lg}
+        fastaexplode -f {input} -d results/chrom
         fgrep '>' {input} |sed 's/>//' |tr '\n' ' ' |sed 's/ /.fa /g' > {output.IDl}
         """
 
 
 rule chunks_multi_fasta:
     output:
-        "results/{lg}/{chrom}.windows.fasta"
+        "results/chrom/{chrom}.windows.fasta"
     input:
-        bed="results/{lg}/{chrom}.windows.bed",
-        fasta="results/{lg}/{chrom}.fasta"
+        bed="results/chrom/{chrom}.windows.bed",
+        fasta="results/chrom/{chrom}.fasta"
     conda:
         "environment.yml"
     shell: "bedtools getfasta -bed {input.bed} -fi {input.fasta} > {output}"
@@ -129,9 +129,9 @@ rule chunks_multi_fasta:
 
 rule chunks_bed:
     output:
-        "results/{lg}/{chrom}.windows.bed"
+        "results/chrom/{chrom}.windows.bed"
     input:
-        "results/{lg}/{chrom}.fasta.fai"
+        "results/chrom/{chrom}.fasta.fai"
     conda:
         "environment.yml"
     shell: "bedtools makewindows -g {input} -w 10000000 > {output}"
@@ -139,9 +139,9 @@ rule chunks_bed:
 
 rule chrom_fai:
     output:
-        "results/{lg}/{chrom}.fasta.fai"
+        "results/chrom/{chrom}.fasta.fai"
     input:
-        "results/{lg}/{chrom}.fasta"
+        "results/chrom/{chrom}.fasta"
     conda:
         "environment.yml"
     shell: "samtools faidx {input}"
@@ -149,7 +149,7 @@ rule chrom_fai:
 
 rule chrom_fasta:
     output:
-        "results/{lg}/{chrom,[A-Za-z0-9]+}.fasta"
+        "results/chrom/{chrom,[A-Za-z0-9]+}.fasta"
     input:
         gefa = config["genomeFasta"],
         fefai = config["genomeFasta"]+".fai"

@@ -9,7 +9,10 @@ Reference genome: [Rabanus-Wallace et al, 2021](https://doi.org/10.1038/s41588-0
 
 ### CLARI-TE_ sh
 
-A shell pipeline for TE annotation working on HPC cluster (slurm) with job dependencies + job-array and using RepeatMasker and ClariTE tools.
+CLARI-TE_sh is a shell pipeline for TE annotation working on HPC cluster and using RepeatMasker and ClariTE tools.  
+Calculs are parallelized in this pipeline and executed on a HPC cluster with SLURM that will schedules job-array submissions.  
+This pipeline is launched with a master script, that launches itself two sub scripts that are linked by dependencies.  
+During the workflow, some bash tests and logs permits to control if all expected files are produced, with the ad hoc format for gff3.  
 
 ### CLARI-TE_ smk
 
@@ -23,13 +26,33 @@ module load gcc/8.1.0 python/3.7.1 snakemake/5.25.0
 Fill in the "config.yml" file with your own genome informations, and the library that RepeatMasker will use if you desire to use another one.  
 Eventually custom the cluster parameters in "hpc2_ressources.json" file according to the HPC cluster used.  
 
-To launch the smk pipeline: 
+At first, it is recommended to make a dry-run (code test without execution) of the analysis.  
+This will check all the rules and the parameters in the config.yaml file and print all the command lines which would have been executed.  
+```console
+snakemake -nrp --use-conda -j 20 --cluster-config hpc2_ressources.json
+```
+
+To have a view of the workflow and its successive rules:  
+```console
+snakemake --rulegraph > rulegraph.dot
+```
+Flowchart:  
+![rulegraph](rulegraph.png)
+
+The pipeline comes with conda environment file which can be used by Snakemake with the option --use-conda.  
+This workflow is built to be parallelized on HPC cluster and paramaters of calculs are setup for each rule by the hpc2_ressources.json file.  
+The -j option will allow to have at most 20 subproccess run through the SLURM scheduler.  
+To visualize the diagram of the parallelized processes, you can run the following command:  
+```console
+snakemake --dag > dag.dot
+```
+Diagram:  
+![dag](dag.png)
+
+To launch the smk pipeline:  
 ```console
 snakemake --use-conda -j 20 --cluster-config hpc2_ressources.json --latency-wait 30
 ```
-
-A visualization of the rules executed by the smk pipeline:  
-![rulegraph](rulegraph.png)
 
 ## Results  
 
@@ -41,7 +64,7 @@ pauline.lasserre-zuber@inrae.fr, frederic.choulet@inrae.fr
 
 ## Roadmap  
 
-Describe TE length proportion changes for 10 top TE-families compared to reference sub-genomes.
+Describe TE length proportion changes for 10 top TE-families compared to reference sub-genomes.  
 
 ## Authors and acknowledgment  
 
