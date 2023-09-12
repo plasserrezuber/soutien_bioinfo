@@ -76,7 +76,7 @@ rule clariTE:
     shell:
         """
         sed -i 's/#Unspecified/#Unknown/' {input.XM}
-        bin/clariTE_1.0/bin/clariTE.pl -dir results/chrom/ -LTR bin/CLARIwheat.LTR_position -classi bin/CLARIwheat.classification -fasta {input.fasta} {input.XM}
+        bin/clariTE_1.0/clariTE.pl -dir results/chrom/ -LTR bin/clariTE_1.0/CLARIwheat.LTR_position -classi bin/clariTE_1.0/CLARIwheat.classification -fasta {input.fasta} {input.XM}
         sed 's/fa.out.xm/fa.out_anno.embl/g' {input.XMl} > {output.EMBLl}
         """
 
@@ -93,6 +93,7 @@ rule repeatmasker:
         "environment.yml"
     shell:
         """
+        cd results/chrom
         RepeatMasker -e crossmatch -lib config['clariTElib'] -xsmall -nolow -xm -pa {threads} -q {input.ID}
         rm {input.ID}.cat {input.ID}.log {input.ID}.masked {input.ID}.ori.out {input.ID}.out {input.ID}.tbl
         sed 's/fa/fa.out.xm/g' {input.IDl} > {output.XMl}
