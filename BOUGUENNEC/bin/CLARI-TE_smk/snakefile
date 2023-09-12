@@ -1,4 +1,5 @@
 configfile: "config.yml"
+print("Config is: ", config)
 
 LG = ["1R", "2R", "3R", "4R", "5R", "6R", "7R", "Un"]
 CHROM = ["chr1R", "chr2R", "chr3R", "chr4R", "chr5R", "chr6R", "chr7R", "chrUn"]
@@ -72,7 +73,8 @@ rule clariTE:
         fasta = glob_wildcards("results/{lg}/{chrom}:{id}.fa"),
         XM = glob_wildcards("results/{lg}/{chrom}:{id}.fa.out.xm"),
         XMl = "results/{lg}/{chrom}_chunks_xm_list.txt"
-    conda: "perl-bioperl=1.7"
+    conda:
+        "environment.yml"
     shell:
         """
         sed -i 's/#Unspecified/#Unknown/' {input.XM}
