@@ -1,0 +1,53 @@
+Bootstrap: docker
+From: conda/miniconda3
+IncludeCmd: yes
+
+%files
+environment.yml
+bin/embl2gff.generic.pl
+bin/embl_to_gff3.sh
+bin/crossmatch/distrib.tar.gz
+bin/clariTE_1.0/CLARIwheat.LTR_position
+bin/clariTE_1.0/CLARIwheat.classification
+bin/clariTE_1.0/CLARIwheat.fasta
+bin/clariTE_1.0/CLARIwheat.nhr
+bin/clariTE_1.0/CLARIwheat.nin
+bin/clariTE_1.0/CLARIwheat.nsd
+bin/clariTE_1.0/CLARIwheat.nsi
+bin/clariTE_1.0/CLARIwheat.nsq
+bin/clariTE_1.0/clariTE.pl
+
+
+%help
+Contains all RMclariTE dependancies
+
+%labels
+    Maintainer pauline.lasserre-zuber@inrae.fr
+    Version v1.0
+
+%post
+apt-get update && apt-get install -y  procps
+conda update -n base -c defaults conda
+conda env create -n mytools -f environment.yml
+conda clean -a
+apt clean
+
+mkdir crossmatch
+cd crossmatch
+mv ../distrib.tar.gz .
+tar -xzf distrib.tar.gz
+make
+rm *.o
+make
+export CROSSMATCH_DIR=$PWD
+export CROSSMATCH_PRGM=$PWD/cross_match
+
+%environment
+export LC_ALL=C
+export PATH=/usr/local/condabin/:$PATH
+. /usr/local/etc/profile.d/conda.sh
+conda activate mytools
+
+
+%runscript
+"$@"
