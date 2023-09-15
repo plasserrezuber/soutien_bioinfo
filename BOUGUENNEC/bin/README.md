@@ -17,6 +17,7 @@ During the workflow, some bash tests and logs permits to control if all expected
 ### CLARI-TE_ smk
 
 A snakemake pipeline for TE annotation working on HPC cluster (slurm).  
+You will need Singularity to buil an image conttaining the necessary tools and their dependencies, and then specify the option "--use-singularity path/singularity.sif" in the snakemake command.  
 
 Are required the following modules:  
 ```console
