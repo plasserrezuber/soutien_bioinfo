@@ -71,7 +71,7 @@ if [ $(find *.fa.out_anno.embl |wc -l) = $(($k+1)) ];
     else echo ${chrom}": missing "$(($(find $OUTPUT/${chrom}/*.fa |wc -l) - $(find $OUTPUT/${chrom}/*.fa.out_anno.embl |wc -l) ))" clariTE output files";
 fi
 
-### /!\ creation d'un script specifique : /storage/groups/gdec/bin/scripts/embl2gff.AeU.pl >>> PAS PROPRE A REVOIR
+### /!\ creation d'un script specifique : /storage/groups/gdec/bin/scripts/embl2gff.AeU.pl >>> new version since: /storage/groups/gdec/bin/scripts/embl2gff.generic_2.2.pl 
 ###### embl2gff: takes all chunks embl and produces one merged .gff
 ## le script embl2gff.AeU.pl numerote les TE par chrom (et non par chunk) en repartant de zero pour chaque chrom a condition
 ## de fournir la liste ordonnee des fichiers pour l'ensemble des chunks par chromosome
