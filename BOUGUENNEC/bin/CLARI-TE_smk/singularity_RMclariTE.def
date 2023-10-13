@@ -1,12 +1,12 @@
 Bootstrap: docker
-From: conda/miniconda3
+From: condaforge/mambaforge
 IncludeCmd: yes
 
 %files
 environment.yml
-bin/embl2gff.generic.pl
+bin/embl2gff.pl
 bin/embl_to_gff3.sh
-bin/crossmatch/distrib.tar.gz
+bin/distrib.tar.gz
 bin/clariTE_1.0/CLARIwheat.LTR_position
 bin/clariTE_1.0/CLARIwheat.classification
 bin/clariTE_1.0/CLARIwheat.fasta
@@ -26,15 +26,17 @@ Contains all RMclariTE dependancies
     Version v1.0
 
 %post
-apt-get update && apt-get install -y  procps
-conda update -n base -c defaults conda
-conda env create -n mytools -f environment.yml
-conda clean -a
-apt clean
+apt-get update && apt-get install -y procps build-essential
+conda config --add channels bioconda
+conda config --add channels conda-forge
+#mamba update -n base -c defaults conda
+mamba env create -f environment.yml
+mamba env list
 
+cd bin
 mkdir crossmatch
+mv distrib.tar.gz crossmatch/
 cd crossmatch
-mv ../distrib.tar.gz .
 tar -xzf distrib.tar.gz
 make
 rm *.o
@@ -46,7 +48,7 @@ export CROSSMATCH_PRGM=$PWD/cross_match
 export LC_ALL=C
 export PATH=/usr/local/condabin/:$PATH
 . /usr/local/etc/profile.d/conda.sh
-conda activate mytools
+mamba activate RMclariTE
 
 
 %runscript
