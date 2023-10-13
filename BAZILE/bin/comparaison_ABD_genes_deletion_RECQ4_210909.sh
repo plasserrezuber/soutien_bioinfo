@@ -100,7 +100,7 @@ cat <(cut -f1,2,3,6 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS.tsv |tr ',' '\t'
 
 cat $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS_A.tsv $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS_B.tsv $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS_D.tsv |sort -k1,1 > $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS_list.tsv
 
-####RECUP NOMS GENES PUBLI POSSIBL SUR KNETMINER
+####RECUP NOMS GENES PUBLIES SUR KNETMINER
 sed -i 's/TRAES/Traes/' KnetMiner_Extract.txt
 sed -i 's/02G/01G/' KnetMiner_Extract.txt
 
@@ -135,3 +135,23 @@ join -t$'\t' -1 2 -2 1 <(sort -k2,2 $OUTPUT/TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS_
 #      22                 11
 #      15                 15
 #      18                 18
+
+## bornes region réduite
+grep _111 TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS_KnetMiner_functionnal_annotation.tsv |grep -v '_111'$'\t''NA'$'\t' |cut -f2 |grep CS2A |sort |head -n1 |sed 's/1G/2G/' >> bornes_21genes_reduced_region.txt
+grep _111 TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS_KnetMiner_functionnal_annotation.tsv |grep -v '_111'$'\t''NA'$'\t' |cut -f2 |grep CS2A |sort |tail -n1 |sed 's/1G/2G/' >> bornes_21genes_reduced_region.txt
+grep _111 TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS_KnetMiner_functionnal_annotation.tsv |grep -v '_111'$'\t''NA'$'\t' |cut -f2 |grep CS2B |sort |head -n1 |sed 's/1G/2G/' >> bornes_21genes_reduced_region.txt
+grep _111 TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS_KnetMiner_functionnal_annotation.tsv |grep -v '_111'$'\t''NA'$'\t' |cut -f2 |grep CS2B |sort |tail -n1 |sed 's/1G/2G/' >> bornes_21genes_reduced_region.txt
+grep _111 TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS_KnetMiner_functionnal_annotation.tsv |grep -v '_111'$'\t''NA'$'\t' |cut -f2 |grep CS2D |sort |head -n1 |sed 's/1G/2G/' >> bornes_21genes_reduced_region.txt
+grep _111 TaeRenan_refseqv2.0_RECQ4_HOMEOLOGS_KnetMiner_functionnal_annotation.tsv |grep -v '_111'$'\t''NA'$'\t' |cut -f2 |grep CS2D |sort |tail -n1 |sed 's/1G/2G/' >> bornes_21genes_reduced_region.txt
+
+join -t$'\t' -1 1 -2 1 bornes_21genes_reduced_region.txt \
+<(sort -k1,1 /storage/groups/gdec/shared/triticum_aestivum/chinese_spring/iwgsc/REFSEQV2/v2.1/annotation/genemodels_v200916/IWGSC_refseqv2.1_annotation_200916_IDmaping.csv) |cut -f2 \
+> bornes_21genes_reduced_region_REFSEQV2.txt
+
+join -t$'\t' -1 1 -2 4 bornes_21genes_reduced_region_REFSEQV2.txt \
+<(sort -k4,4 /storage/groups/gdec/shared/triticum_aestivum/chinese_spring/iwgsc/REFSEQV2/v2.1/annotation/genemodels_v200916/IWGSC_refseqv2.1_annotation_200916.bed) \
+|gawk '{ print $2,$3,$4,$1 }'> bornes_21genes_reduced_region_REFSEQV2.bed
+
+#chr2A 10 656 313
+#chr2B 8 947 829
+#chr2D 7 735 750
