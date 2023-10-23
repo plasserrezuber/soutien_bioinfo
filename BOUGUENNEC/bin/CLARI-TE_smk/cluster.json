@@ -2,7 +2,7 @@
 	"__default__" :
 	{
 		"time" : "10:00:00",
-		"partition" : "normal",
+		"partition" : "gdec",
 		"nodes" : 1,
 		"cpu" : 1,
 		"mem" : "8G",

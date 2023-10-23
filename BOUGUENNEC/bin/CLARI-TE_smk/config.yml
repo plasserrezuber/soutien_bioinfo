@@ -1,5 +1,5 @@
 # Path to the genome's fasta to annotate
-genomeFasta: "/storage/groups/gdec/shared/secale_cereale/Lo7_RefSeq/Secale_cereale_Lo7_RefSeq_RabanusWallace_etal_2020_pseudomolecules.fasta"
+genomeFasta: "/home/palasser/data/Secale_cereale_Lo7_RefSeq_RabanusWallace_etal_2020_pseudomolecules.fasta"
 
 # Fill in the TEs' ID prefix for feature annotation in gff3. It is recommanded to follow a nomenclature shared by your scientific community.
 # Example: 2 first letters of the genus, 3 first letters of the species, short name of the variety/accession.

@@ -16,15 +16,33 @@ During the workflow, some bash tests and logs permits to control if all expected
 
 ### CLARI-TE_ smk
 
-A snakemake pipeline for TE annotation working on HPC cluster (slurm).  
-You will need Singularity to buil an image conttaining the necessary tools and their dependencies, and then specify the option "--use-singularity path/singularity.sif" in the snakemake command.  
+A Snakemake pipeline for TE annotation working on HPC cluster (slurm).  
 
-Are required the following modules:  
+This Snakmake workflow uses a Singularity image named 'singularity_RMclariTE.sif' containing all tools and dependencies needed. Snakemake rules will be executed within this image, built with root permissions (on my own computer) tanks to the definition file 'singularity_RMclariTE.def' and the following commands:
+
+
+You will need Singularity to buil an image conttaining the necessary tools and their dependencies, and then specify the option "--use-singularity path/singularity.sif" in the snakemake command.  
 ```console
-module load gcc/8.1.0 python/3.7.1 snakemake/5.25.0  
+## to see the configuration file Singularity.conf with --dry-run option:
+sudo singularity config global --dry-run --set "mount hostfs" yes
+## to turn on that singularity will probe for all mounted file systems that are mounted on the host, and bind those into the container at runtime
+sudo singularity config global --set "mount hostfs" yes
+## to check that it is effective
+sudo singularity config global --get "mount hostfs"
+## to check bind path
+sudo singularity config global --get "bind path"
+
+## to build the image
+sudo singularity build singularity_RMclariTE.sif singularity_RMclariTE.def
 ```
 
-Fill in the "config.yml" file with your own genome informations, and the library that RepeatMasker will use if you desire to use another one.  
+
+To run this snakemake pipeline, it requires that Singularity is installed in order to execute the '.sif' file, and loading the following modules:  
+```console
+module load gcc/8.1.0 python/3.7.1 snakemake/7.15.1  
+```
+
+Then, fill in the "config.yml" file with your own genome informations, and the library that RepeatMasker will use if you desire to use another one.  
 Eventually custom the cluster parameters in "cluster.json" file according to the HPC cluster used.  
 
 At first, it is recommended to make a dry-run (code test without execution) of the analysis.  
@@ -56,7 +74,8 @@ Diagram:
 The --latency-wait option will permit to deal with busy clusters:
 To launch the smk pipeline:  
 ```console
-snakemake --use-conda -j 20 --cluster-config cluster.json --latency-wait 45 --cluster "sbatch --parsable -p {cluster.partition} -c {cluster.cpu} -N {cluster.nodes} --mem= {cluster.mem} -t {cluster.time} --job-name={cluster.jobName} -o logs/{cluster.output} -e logs/{cluster.error}"
+#snakemake --use-conda -j 20 --cluster-config cluster.json --latency-wait 45 --cluster "sbatch --parsable -p {cluster.partition} -c {cluster.cpu} -N {cluster.nodes} --mem= {cluster.mem} -t {cluster.time} --job-name={cluster.jobName} -o logs/{cluster.output} -e logs/{cluster.error}"
+snakemake --use-singularity -j 20 --cluster-config cluster.json --latency-wait 45
 ```
 
 ## Results  

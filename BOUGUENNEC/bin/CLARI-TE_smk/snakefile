@@ -14,7 +14,6 @@ onstart:
     shell('mkdir -p results')
     shell('mkdir -p results/chrom')
 
-
 rule all:
     input:
         "results/"+config['TeIDsPrefix']+"clariTE.gff3"
@@ -24,11 +23,12 @@ rule merge_chrom_gff3:
     output:
         "results/"+config['TeIDsPrefix']+"clariTE.gff3"
     input:
+        expand("results/chrom/{chrom}_gff3validator.log", chrom=CHROM),
         expand("results/chrom/{chrom}_clariTE.gff3", chrom=CHROM)
     log:
         err="logs/"+config['TeIDsPrefix']+"gt_gff3_tidy.err"
-    conda:
-        "environment.yml"
+    singularity:
+        "singularity_RMclariTE.sif"
     shell: "gt gff3 -sort -tidy -retainids {input} 1> {output} 2> {log.err}" 
 
 
@@ -39,12 +39,9 @@ rule check_gff3:
         "results/chrom/{chrom}_clariTE.gff3"
     log:
         "logs/chrom/{chrom}_gt_gff3validator.err"
-    conda:
-        "environment.yml"
-    shell:
-        """
-        gt gff3validator {input} 1> {output} 2> {log}
-        """
+    singularity:
+        "singularity_RMclariTE.sif"
+    shell: "gt gff3validator {input} 1> {output} 2> {log}"
 
 
 rule embl_to_gff3:
@@ -55,11 +52,11 @@ rule embl_to_gff3:
         EMBLl="results/chrom/{chrom}_chunks_embl_list.txt"
     params:
         config['TeIDsPrefix']
-    conda:
-        "environment.yml"
+    singularity:
+        "singularity_RMclariTE.sif"
     shell:
         """
-        bin/embl_to_gff3.sh {wildcards.chrom} {params}
+        embl_to_gff3.sh {wildcards.chrom} {params}
         """
 
 
@@ -71,8 +68,8 @@ rule clariTE:
         fasta = glob_wildcards("results/chrom/{chrom}:{id}.fa"),
         XM = glob_wildcards("results/chrom/{chrom}:{id}.fa.out.xm"),
         XMl = "results/chrom/{chrom}_chunks_xm_list.txt"
-    conda:
-        "environment.yml"
+    singularity:
+        "singularity_RMclariTE.sif"
     shell:
         """
         sed -i 's/#Unspecified/#Unknown/' {input.XM}
@@ -89,8 +86,8 @@ rule repeatmasker:
         ID = glob_wildcards("results/chrom/{chrom}:{id}.fa"),
         IDl = "results/chrom/{chrom}_chunks_fa_list.txt"
     threads: 16
-    conda:
-        "environment.yml"
+    singularity:
+        "singularity_RMclariTE.sif"
     shell:
         """
         cd results/chrom
@@ -99,15 +96,16 @@ rule repeatmasker:
         sed 's/fa/fa.out.xm/g' {input.IDl} > {output.XMl}
         """
 
-
+## SyntaxError: Not all output, log and benchmark files of rule chunks_fasta contain the same wildcards. This is crucial though, in order to avoid that two or more jobs write to the same file.
+## File "/home/palasser/projects/soutien_bioinfo/test_CLARITE_smk/snakefile", line 110, in <module>
 rule chunks_fasta:
     output:
         ID= glob_wildcards("results/chrom/{chrom}:{id}.fa"),
         IDl = "results/chrom/{chrom}_chunks_fa_list.txt"
     input: 
         "results/chrom/{chrom}.windows.fasta"
-    conda:
-        "environment.yml"
+    singularity:
+        "singularity_RMclariTE.sif"
     shell:
         """
         fastaexplode -f {input} -d results/chrom
@@ -121,8 +119,8 @@ rule chunks_multi_fasta:
     input:
         bed="results/chrom/{chrom}.windows.bed",
         fasta="results/chrom/{chrom}.fasta"
-    conda:
-        "environment.yml"
+    singularity:
+        "singularity_RMclariTE.sif"
     shell: "bedtools getfasta -bed {input.bed} -fi {input.fasta} > {output}"
 
 
@@ -131,8 +129,8 @@ rule chunks_bed:
         "results/chrom/{chrom}.windows.bed"
     input:
         "results/chrom/{chrom}.fasta.fai"
-    conda:
-        "environment.yml"
+    singularity:
+        "singularity_RMclariTE.sif"
     shell: "bedtools makewindows -g {input} -w 10000000 > {output}"
 
 
@@ -141,8 +139,8 @@ rule chrom_fai:
         "results/chrom/{chrom}.fasta.fai"
     input:
         "results/chrom/{chrom}.fasta"
-    conda:
-        "environment.yml"
+    singularity:
+        "singularity_RMclariTE.sif"
     shell: "samtools faidx {input}"
 
 
@@ -152,8 +150,8 @@ rule chrom_fasta:
     input:
         gefa = "results/genome.fasta",
         fafai = "results/genome.fasta.fai"
-    conda:
-        "environment.yml"
+    singularity:
+        "singularity_RMclariTE.sif"
     shell: "samtools faidx {input.gefa} {wildcards.chrom} > {output}"
 
 
@@ -163,9 +161,9 @@ rule genome_fai:
         fafai = "results/genome.fasta.fai"
     input:
         config['genomeFasta']
-    conda:
-        "environment.yml"
-    shell:
+    singularity:
+        "singularity_RMclariTE.sif"
+    shell: 
         """
         ln -s {input} {output.gefa}
         samtools faidx {output.gefa}
