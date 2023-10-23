@@ -30,7 +30,13 @@ apt-get update && apt-get install -y procps build-essential
 conda config --add channels bioconda
 conda config --add channels conda-forge
 mamba env create -f environment.yml
+echo '# to activate the conda environment' > ~/.bashrc
+mamba init bash
+echo ' 
+mamba activate RMclariTE' >> ~/.bashrc
 mamba clean -a
+mkdir -p /opt/etc
+cp ~/.bashrc /opt/etc/.bashrc
 
 cd bin
 mkdir crossmatch
@@ -43,13 +49,12 @@ make
 
 %environment
 export LC_ALL=C
-export BASH_ENV=.bashrc
+export BASH_ENV=/opt/etc/.bashrc
 export PATH=/usr/bin:/usr/bin/crossmatch:$PATH
 export CROSSMATCH_DIR=/usr/bin/crossmatch
 export CROSSMATCH_PRGM=/usr/bin/crossmatch/cross_match
 . /opt/conda/etc/profile.d/mamba.sh
-echo "mamba activate RMclariTE" >> ~/.bashrc
-/bin/bash -l
+source /opt/etc/.bashrc
 
 %runscript
 "$@"
