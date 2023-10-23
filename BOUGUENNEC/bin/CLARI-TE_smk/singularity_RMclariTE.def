@@ -29,9 +29,8 @@ Contains all RMclariTE dependancies
 apt-get update && apt-get install -y procps build-essential
 conda config --add channels bioconda
 conda config --add channels conda-forge
-#mamba update -n base -c defaults conda
 mamba env create -f environment.yml
-mamba env list
+mamba clean -a
 
 cd bin
 mkdir crossmatch
@@ -41,15 +40,16 @@ tar -xzf distrib.tar.gz
 make
 rm *.o
 make
-export CROSSMATCH_DIR=$PWD
-export CROSSMATCH_PRGM=$PWD/cross_match
 
 %environment
 export LC_ALL=C
-export PATH=/usr/local/condabin/:$PATH
-. /usr/local/etc/profile.d/conda.sh
-mamba activate RMclariTE
-
+export BASH_ENV=.bashrc
+export PATH=/usr/bin:/usr/bin/crossmatch:$PATH
+export CROSSMATCH_DIR=/usr/bin/crossmatch
+export CROSSMATCH_PRGM=/usr/bin/crossmatch/cross_match
+. /opt/conda/etc/profile.d/mamba.sh
+echo "mamba activate RMclariTE" >> ~/.bashrc
+/bin/bash -l
 
 %runscript
 "$@"
