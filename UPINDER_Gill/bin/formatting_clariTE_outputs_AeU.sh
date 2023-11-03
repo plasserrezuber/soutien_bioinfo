@@ -41,16 +41,17 @@ bedtools merge -i <(grep '\smatch_part\s' $OUTPUT/AeU_RefSeq_clariTE.gff3 |grep 
 bedtools merge -i <(grep '^Chr' $OUTPUT/AeU_RefSeq_clariTE.gff3 |grep -v '^ChrUn' |cut -f1,4,5 |sort -k1,1 -k2,2n) |gawk '{ sum+=$3-$2; print sum }' |tail -n1
 ### 3669965541 (diff avec repeat_region=105)
 
-/home/palasser/projects/wheatomics_wp1/annotation/TE/bin/length_Family_TE.py $OUTPUT/AeU_RefSeq_clariTE.gff3 |sort -k1,1 -k4,4n > $OUTPUT/AeU_RefSeq_clariTE_For_Length_TE_calculation.gff3
+/home/palasser/bin/length_Family_TE.py $OUTPUT/AeU_RefSeq_clariTE.gff3 |sort -k1,1 -k4,4n > $OUTPUT/AeU_RefSeq_clariTE_For_Length_TE_calculation.gff3
 
-for chr in "1U" "2U" "3U" "4U" "5U" "6U" "7U" "Un";
+rm Length_TE_AeU_FamLevel.tsv Nb_TE_AeU_SUPERFamLevel.tsv Length_TE_AeU_SUPERFamLevel.tsv
+for chr in "1U" "2U" "3U" "4U" "5U" "6U" "7U";
 do
     chrom='Chr'$chr
-    # grep ^$chrom $OUTPUT/AeU_RefSeq_clariTE_For_Length_TE_calculation.gff3 |gawk -v OFS='\t' '{print $NF,$5-$4}' |sed -E 's/\.[0-9]*//' \
-    # |gawk -v grp=$chrom -v OFS='\t' '{a[$1]+=$2}END{for(i in a) print grp,i,a[i]}'  |sort -k1,1 >> Length_TE_AeU_FamLevel.tsv
+    grep ^$chrom $OUTPUT/AeU_RefSeq_clariTE_For_Length_TE_calculation.gff3 |gawk -v OFS='\t' '{print $NF,$5-$4}' |sed -E 's/\.[0-9]*//' \
+    |gawk -v grp=$chrom -v OFS='\t' '{a[$1]+=$2}END{for(i in a) print grp,i,a[i]}' |sort -k1,1 >> Length_TE_AeU_FamLevel.tsv
 
     grep ^$chrom $OUTPUT/AeU_RefSeq_clariTE_For_Length_TE_calculation.gff3 |gawk -v OFS='\t' '{print $NF,$5-$4}' |sed -E 's/_.*\t/\t/' \
-    |gawk -v grp=$chrom -v OFS='\t' '{a[$1]+=$2}END{for(i in a) print grp,i,a[i]}'  |sort -k1,1 >> Length_TE_AeU_SUPERFamLevel.tsv
+    |gawk -v grp=$chrom -v OFS='\t' '{a[$1]+=$2}END{for(i in a) print grp,i,a[i]}' |sort -k1,1 >> Length_TE_AeU_SUPERFamLevel.tsv
 
     grep ^$chrom $OUTPUT/AeU_RefSeq_clariTE.gff3 |grep '\srepeat_region\s' |cut -f9 |sed -E 's/ID=.*Family:(.*)[_|w].* Matching.*/\1/' \
     |sort |uniq -c |gawk -v grp=$chrom -v OFS='\t' '{print grp,$2,$1}' >> Nb_TE_AeU_SUPERFamLevel.tsv
@@ -61,3 +62,18 @@ gawk '{if ($0!~"ChrUn") sum+=$3; print sum}' Length_TE_AeU_SUPERFamLevel.tsv |ta
 ### 3384737944
 gawk '{ if ($0!~"ChrUn" && $0!~"unknown") sum+=$3; print sum}' Length_TE_AeU_SUPERFamLevel.tsv |tail -n1
 ### 3383953312
+
+#### REFSEQV2
+/home/palasser/bin/length_Family_TE_REFSEQV2.py /storage/groups/gdec/shared/triticum_aestivum/chinese_spring/iwgsc/REFSEQV2/v2.1/annotation/clariTE/Tae.Chinese_Spring.refSeqv2.1.gff3 \
+|sort -k1,1 -k4,4n > /home/palasser/data/REFSEQV2/refSeqv2.1_clariTE_For_Length_TE_calculation.gff3 
+
+rm /home/palasser/data/REFSEQV2/Length_TE_refseqv2_FamLevel.tsv /home/palasser/data/REFSEQV2/Length_TE_refseqv2_SUPERFamLevel.tsv
+for chr in "1A" "2A" "3A" "4A" "5A" "6A" "7A" "1B" "2B" "3B" "4B" "5B" "6B" "7B" "1D" "2D" "3D" "4D" "5D" "6D" "7D";
+do
+    chrom='Chr'$chr
+    grep ^$chrom /home/palasser/data/REFSEQV2/refSeqv2.1_clariTE_For_Length_TE_calculation.gff3 |gawk -v OFS='\t' '{print $NF,$5-$4}' |sed -E 's/\.[0-9]*//' \
+    |gawk -v grp=$chrom -v OFS='\t' '{a[$1]+=$2}END{for(i in a) print grp,i,a[i]}' |sort -k1,1 >> /home/palasser/data/REFSEQV2/Length_TE_refseqv2_FamLevel.tsv
+
+    grep ^$chrom /home/palasser/data/REFSEQV2/refSeqv2.1_clariTE_For_Length_TE_calculation.gff3 |gawk -v OFS='\t' '{print $NF,$5-$4}' |sed -E 's/_.*\t/\t/' \
+    |gawk -v grp=$chrom -v OFS='\t' '{a[$1]+=$2}END{for(i in a) print grp,i,a[i]}' |sort -k1,1 >> /home/palasser/data/REFSEQV2/Length_TE_refseqv2_SUPERFamLevel.tsv
+done
