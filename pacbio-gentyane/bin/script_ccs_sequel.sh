@@ -1,11 +1,10 @@
 #!/bin/bash
 
 #SBATCH --job-name=ccs 
-#SBATCH -o job-%A_%a_task.out
+#SBATCH -o ccs-%A_%a_task.out
 #SBATCH -n 128
 #SBATCH --mem=64G
 #SBATCH --partition=gdec
-#SBATCH --account=premium_gentyane
 #SBATCH --time=3-00:00:00
 #SBATCH --export=all
 
@@ -21,7 +20,7 @@ pwd
 mypath=${1?Usage: $0 <mypath> <mydir>}
 mydir=${2?Usage: $0 <mypath> <mydir>}
 
-mkdir -p $HOME/$mydir
+mkdir -p $mydir
 
 echo -e "Ok, the CCS are gonna be created with the subreads file in pacbio-data/$mypath\n" 
 
@@ -110,14 +109,14 @@ fusermount -u pacbio-data
 
 
 if [[ "$?" -eq "0" ]];then
-        mv $workingdir/subreads/ccs* $HOME/$mydir/ 
+        mv $workingdir/subreads/ccs* $mydir/ 
         cd $HOME
         rm -rf $workingdir
 fi
 
 echo -e "\n"
 
-echo -e "The CCS are now in $HOME/$mydir" 
+echo -e "The CCS are now in $mydir" 
 
 echo -e "\n" 
 

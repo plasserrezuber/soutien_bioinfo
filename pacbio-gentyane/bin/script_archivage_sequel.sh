@@ -97,18 +97,18 @@ fi
 echo -e "\n"
 
 ### Change the subreads.bam name with its real name ###
+#s3cmd -c ~/.s3cfg_gentyane mv s3://pacbio-data/$mypath/${smrtcell_name}.subreads.bam s3://pacbio-data/$mypath/$archive.subreads.bam
 
 echo -e "Creating and adding the md5sum file to the bucket"
 
-#s3cmd -c ~/.s3cfg_gentyane mv s3://pacbio-data/$mypath/${smrtcell_name}.subreads.bam s3://pacbio-data/$mypath/$archive.subreads.bam
-
+### compute the md5 du fichier $archive.subreads.bam###
 s3cmd -c ~/.s3cfg_gentyane ls --list-md5 s3://pacbio-data-provisoire/$mypath/${smrtcell_name}.subreads.bam > ${smrtcell_name}.subreads.md5 
 
 s3cmd -c ~/.s3cfg_gentyane put *.subreads.md5 s3://pacbio-data-provisoire/$mypath/${smrtcell_name}.subreads.md5
 
 echo -e "Done\n"
 
-### Create the symlinks and the archive & compute the md5 du fichier $archive.subreads.bam###
+### Create the symlinks and the archive ###
 
 fusermount -u pacbio-data
 

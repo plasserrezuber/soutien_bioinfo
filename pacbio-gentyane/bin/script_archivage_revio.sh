@@ -51,9 +51,6 @@ archive=$(fgrep -m1 'ConsensusReadSet' pacbio-data-provisoire/$mypath/pb_formats
 smrtcell_name=$(fgrep -m1 'ResourceId' pacbio-data-provisoire/$mypath/pb_formats/*.hifi_reads.consensusreadset.xml | cut -d' ' -f4 | cut -d/ -f3 | cut -d'.' -f1)
 
 
-
-remove=$(echo *.hifi_reads.bc*.bam)
-
 ## utilisation de lien symboliques du point de montage ./pacbio-data-provisoire vers le workingdir (on a fait un cd en débit de script) pour éviter une écriture directe dans le point de montage
 # le tar.gz est ecrit en dehors du point de montage, puis verse avec s3cmd put sur oscar
 # (qui serait sauvegardée sur oscar également, ce qui soliciterai bcp d'appels reseau + des snapshots de sauvegarde)
