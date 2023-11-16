@@ -43,18 +43,21 @@ bedtools merge -i <(grep '^Chr' $OUTPUT/AeU_RefSeq_clariTE.gff3 |grep -v '^ChrUn
 
 /home/palasser/bin/length_Family_TE.py $OUTPUT/AeU_RefSeq_clariTE.gff3 |sort -k1,1 -k4,4n > $OUTPUT/AeU_RefSeq_clariTE_For_Length_TE_calculation.gff3
 
-rm Length_TE_AeU_FamLevel.tsv Nb_TE_AeU_SUPERFamLevel.tsv Length_TE_AeU_SUPERFamLevel.tsv
-for chr in "1U" "2U" "3U" "4U" "5U" "6U" "7U";
+rm $OUTPUT/Length_TE_AeU_FamLevel.tsv $OUTPUT/Nb_TE_AeU_SUPERFamLevel.tsv $OUTPUT/Length_TE_AeU_SUPERFamLevel.tsv
+for chr in "1U" "2U" "3U" "4U" "5U" "6U" "7U" "Un";
 do
     chrom='Chr'$chr
     grep ^$chrom $OUTPUT/AeU_RefSeq_clariTE_For_Length_TE_calculation.gff3 |gawk -v OFS='\t' '{print $NF,$5-$4}' |sed -E 's/\.[0-9]*//' \
-    |gawk -v grp=$chrom -v OFS='\t' '{a[$1]+=$2}END{for(i in a) print grp,i,a[i]}' |sort -k1,1 >> Length_TE_AeU_FamLevel.tsv
+    |gawk -v grp=$chrom -v OFS='\t' '{a[$1]+=$2}END{for(i in a) print grp,i,a[i]}' |sort -k1,1 >> $OUTPUT/Length_TE_AeU_FamLevel.tsv
 
     grep ^$chrom $OUTPUT/AeU_RefSeq_clariTE_For_Length_TE_calculation.gff3 |gawk -v OFS='\t' '{print $NF,$5-$4}' |sed -E 's/_.*\t/\t/' \
-    |gawk -v grp=$chrom -v OFS='\t' '{a[$1]+=$2}END{for(i in a) print grp,i,a[i]}' |sort -k1,1 >> Length_TE_AeU_SUPERFamLevel.tsv
+    |gawk -v grp=$chrom -v OFS='\t' '{a[$1]+=$2}END{for(i in a) print grp,i,a[i]}' |sort -k1,1 >> $OUTPUT/Length_TE_AeU_SUPERFamLevel.tsv
 
     grep ^$chrom $OUTPUT/AeU_RefSeq_clariTE.gff3 |grep '\srepeat_region\s' |cut -f9 |sed -E 's/ID=.*Family:(.*)[_|w].* Matching.*/\1/' \
-    |sort |uniq -c |gawk -v grp=$chrom -v OFS='\t' '{print grp,$2,$1}' >> Nb_TE_AeU_SUPERFamLevel.tsv
+    |sort |uniq -c |gawk -v grp=$chrom -v OFS='\t' '{print grp,$2,$1}' >> $OUTPUT/Nb_TE_AeU_SUPERFamLevel.tsv
+
+    grep ^$chrom $OUTPUT/AeU_RefSeq_clariTE.gff3 |grep '\srepeat_region\s' |cut -f9 |sed -E 's/ID=.*Family:(.*) Matching.*/\1/' \
+    |sort |uniq -c |gawk -v grp=$chrom -v OFS='\t' '{print grp,$2,$1}' >> $OUTPUT/Nb_TE_AeU_FamLevel.tsv
 done
 
 ##CALCUL A RETENIR
