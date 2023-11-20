@@ -29,11 +29,15 @@ sudo singularity config global --dry-run --set "mount hostfs" yes
 sudo singularity config global --set "mount hostfs" yes
 ## to check that it is effective
 sudo singularity config global --get "mount hostfs"
-## to check bind path
-sudo singularity config global --get "bind path"
 
-## to build the image
+## to build the image with sudo permissions
 sudo singularity build singularity_RMclariTE.sif singularity_RMclariTE.def
+
+## to run the image as a user in an interactive way, and thus having access to its environment and tools
+singularity shell singularity_RMclariTE.sif
+
+## to execute a command within the image as a user in an non interactive way
+singularity exec singularity_RMclariTE.sif RepeatMasker --help
 ```
 
 
@@ -48,7 +52,7 @@ Eventually custom the cluster parameters in "cluster.json" file according to the
 At first, it is recommended to make a dry-run (code test without execution) of the analysis.  
 This will check all the rules and the parameters in the config.yaml file and print all the command lines which would have been executed.  
 ```console
-snakemake -nrp --use-conda -j 20 --cluster-config cluster.json
+snakemake -nrp --use-singularity --singularity-args '--bind /home/palasser/data' -j 20 --cluster-config cluster.json
 ```
 
 To have a view of the workflow and its successive rules:  
@@ -74,8 +78,11 @@ Diagram:
 The --latency-wait option will permit to deal with busy clusters:
 To launch the smk pipeline:  
 ```console
-#snakemake --use-conda -j 20 --cluster-config cluster.json --latency-wait 45 --cluster "sbatch --parsable -p {cluster.partition} -c {cluster.cpu} -N {cluster.nodes} --mem= {cluster.mem} -t {cluster.time} --job-name={cluster.jobName} -o logs/{cluster.output} -e logs/{cluster.error}"
-snakemake --use-singularity -j 20 --cluster-config cluster.json --latency-wait 45
+## snakemake command with conda environment and --cluster-config option but deprecated 
+#snakemake --use-conda -j 20 --cluster-config cluster.json --latency-wait 45 --cluster "sbatch --parsable -p {cluster.partition} -c {cluster.cpu} -N {cluster.nodes} --mem={cluster.mem} -t {cluster.time} --job-name={cluster.jobName} -o logs/{cluster.output} -e logs/{cluster.error}"
+
+# snakemake command with a profile in folder cluster_profile/config.yaml defining options and cluster parameters
+snakemake --singularity-args '--bind /home/palasser/data' --profile cluster_profile
 ```
 
 ## Results  

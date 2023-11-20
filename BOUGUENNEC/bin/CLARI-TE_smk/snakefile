@@ -3,33 +3,37 @@ print("Config is: ", config)
 
 CHROM = config['chromList']
 
+wildcard_constraints:
+    chrom="[A-Za-z0-9]+"
+
 onsuccess:
     print("Workflow finished with no error")
 
 onstart:
     print("##### ClariTE annotation Workflow #####\n") 
     print("## Creating output folders ##\n")
-    shell('mkdir -p logs')
     shell('mkdir -p logs/chrom')
-    shell('mkdir -p results')
     shell('mkdir -p results/chrom')
 
 rule all:
     input:
-        "results/"+config['TeIDsPrefix']+"clariTE.gff3"
+        "results/"+config['TeIDsPrefix']+"clariTE.gff3",
+        #expand("results/chrom/{chrom}/{i}.fa.out_anno.embl", chrom=CHROM, i=CHUNK)
 
 
 rule merge_chrom_gff3:
     output:
         "results/"+config['TeIDsPrefix']+"clariTE.gff3"
     input:
-        expand("results/chrom/{chrom}_gff3validator.log", chrom=CHROM),
-        expand("results/chrom/{chrom}_clariTE.gff3", chrom=CHROM)
+        LOG = expand("results/chrom/{chrom}_gff3validator.log", chrom=CHROM),
+        GFF = expand("results/chrom/{chrom}_clariTE.gff3", chrom=CHROM)
     log:
         err="logs/"+config['TeIDsPrefix']+"gt_gff3_tidy.err"
     singularity:
         "singularity_RMclariTE.sif"
-    shell: "gt gff3 -sort -tidy -retainids {input} 1> {output} 2> {log.err}" 
+    resources:
+        time="01:00:00"
+    shell: "gt gff3 -sort -tidy -retainids {input.GFF} 1> {output} 2> {log.err}" 
 
 
 rule check_gff3:
@@ -41,75 +45,86 @@ rule check_gff3:
         "logs/chrom/{chrom}_gt_gff3validator.err"
     singularity:
         "singularity_RMclariTE.sif"
+    resources:
+        time="00:20:00"
     shell: "gt gff3validator {input} 1> {output} 2> {log}"
 
 
+# input function for next rule, return paths list to all files produced by the checkpoint 'chunks_fasta'
+def embl_list(wildcards):
+    checkpoint_output = checkpoints.chunks_fasta.get(**wildcards).output[0]
+    return expand("results/chrom/{chrom}/{i}.fa.out_anno.embl", chrom=wildcards.chrom, i=glob_wildcards(os.path.join(checkpoint_output, "{i}.fa")).i)
+
+## verifier si $3 et $embl_files fonctionne bien avec embl2gff.pl dans embl_to_gff.sh
 rule embl_to_gff3:
     output:
         "results/chrom/{chrom}_clariTE.gff3"
     input:
-        EMBL = glob_wildcards("results/chrom/{chrom}:{id}.fa.out_anno.embl"),
-        EMBLl="results/chrom/{chrom}_chunks_embl_list.txt"
+        embl_list
     params:
         config['TeIDsPrefix']
     singularity:
         "singularity_RMclariTE.sif"
+    resources:
+        time="01:00:00"
     shell:
         """
-        embl_to_gff3.sh {wildcards.chrom} {params}
+        embl_to_gff3.sh {wildcards.chrom} {params} {input}
         """
 
 
 rule clariTE:
     output:
-        EMBL = glob_wildcards("results/chrom/{chrom}:{id}.fa.out_anno.embl"),
-        EMBLl="results/chrom/{chrom}_chunks_embl_list.txt"
+        EMBL = "results/chrom/{chrom}/{i}.fa.out_anno.embl"
     input:
-        fasta = glob_wildcards("results/chrom/{chrom}:{id}.fa"),
-        XM = glob_wildcards("results/chrom/{chrom}:{id}.fa.out.xm"),
-        XMl = "results/chrom/{chrom}_chunks_xm_list.txt"
+        fasta = "results/chrom/{chrom}/{i}.fa",
+        XM = "results/chrom/{chrom}/{i}.fa.out.xm"
     singularity:
         "singularity_RMclariTE.sif"
+    resources:
+        time="01:00:00",
+        mem=16000
     shell:
         """
         sed -i 's/#Unspecified/#Unknown/' {input.XM}
         bin/clariTE_1.0/clariTE.pl -dir results/chrom/ -LTR bin/clariTE_1.0/CLARIwheat.LTR_position -classi bin/clariTE_1.0/CLARIwheat.classification -fasta {input.fasta} {input.XM}
-        sed 's/fa.out.xm/fa.out_anno.embl/g' {input.XMl} > {output.EMBLl}
         """
 
 
 rule repeatmasker:
     output:
-        XM = glob_wildcards("results/chrom/{chrom}:{id}.fa.out.xm"),
-        XMl = "results/chrom/{chrom}_chunks_xm_list.txt"
+        XM = "results/chrom/{chrom}/{i}.fa.out.xm"
     input:
-        ID = glob_wildcards("results/chrom/{chrom}:{id}.fa"),
-        IDl = "results/chrom/{chrom}_chunks_fa_list.txt"
-    threads: 16
+        fasta = "results/chrom/{chrom}/{i}.fa"
     singularity:
         "singularity_RMclariTE.sif"
+    resources:
+        time="12:00:00",
+        mem=16000
+    threads: 16
+    params:
+        config['clariTElib']
     shell:
         """
-        cd results/chrom
-        RepeatMasker -e crossmatch -lib config['clariTElib'] -xsmall -nolow -xm -pa {threads} -q {input.ID}
-        rm {input.ID}.cat {input.ID}.log {input.ID}.masked {input.ID}.ori.out {input.ID}.out {input.ID}.tbl
-        sed 's/fa/fa.out.xm/g' {input.IDl} > {output.XMl}
+        cd results/chrom/{wildcards.chrom}
+        RepeatMasker -e crossmatch -lib {params} -xsmall -nolow -xm -pa {threads} -q $(basename {input.fasta})
+        cd ../..
+        rm {input.fasta}.cat {input.fasta}.log {input.fasta}.masked {input.fasta}.ori.out {input.fasta}.out {input.fasta}.tbl
         """
 
-## SyntaxError: Not all output, log and benchmark files of rule chunks_fasta contain the same wildcards. This is crucial though, in order to avoid that two or more jobs write to the same file.
-## File "/home/palasser/projects/soutien_bioinfo/test_CLARITE_smk/snakefile", line 110, in <module>
-rule chunks_fasta:
+checkpoint chunks_fasta:
     output:
-        ID= glob_wildcards("results/chrom/{chrom}:{id}.fa"),
-        IDl = "results/chrom/{chrom}_chunks_fa_list.txt"
+        directory("results/chrom/{chrom}/")
     input: 
         "results/chrom/{chrom}.windows.fasta"
     singularity:
         "singularity_RMclariTE.sif"
+    resources:
+        time="00:30:00"
     shell:
         """
-        fastaexplode -f {input} -d results/chrom
-        fgrep '>' {input} |sed 's/>//' |tr '\n' ' ' |sed 's/ /.fa /g' > {output.IDl}
+        mkdir results/chrom/{wildcards.chrom}
+        fastaexplode -f {input} -d results/chrom/{wildcards.chrom}
         """
 
 
@@ -121,6 +136,8 @@ rule chunks_multi_fasta:
         fasta="results/chrom/{chrom}.fasta"
     singularity:
         "singularity_RMclariTE.sif"
+    resources:
+        time="00:30:00"
     shell: "bedtools getfasta -bed {input.bed} -fi {input.fasta} > {output}"
 
 
@@ -131,6 +148,8 @@ rule chunks_bed:
         "results/chrom/{chrom}.fasta.fai"
     singularity:
         "singularity_RMclariTE.sif"
+    resources:
+        time="00:30:00"
     shell: "bedtools makewindows -g {input} -w 10000000 > {output}"
 
 
@@ -141,17 +160,21 @@ rule chrom_fai:
         "results/chrom/{chrom}.fasta"
     singularity:
         "singularity_RMclariTE.sif"
+    resources:
+        time="00:10:00"
     shell: "samtools faidx {input}"
 
 
 rule chrom_fasta:
     output:
-        "results/chrom/{chrom,[A-Za-z0-9]+}.fasta"
+        "results/chrom/{chrom}.fasta"
     input:
         gefa = "results/genome.fasta",
         fafai = "results/genome.fasta.fai"
     singularity:
         "singularity_RMclariTE.sif"
+    resources:
+        time="00:10:00"
     shell: "samtools faidx {input.gefa} {wildcards.chrom} > {output}"
 
 
@@ -163,6 +186,8 @@ rule genome_fai:
         config['genomeFasta']
     singularity:
         "singularity_RMclariTE.sif"
+    resources:
+        time="00:10:00"
     shell: 
         """
         ln -s {input} {output.gefa}
