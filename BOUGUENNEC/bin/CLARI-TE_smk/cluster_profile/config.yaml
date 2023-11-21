@@ -1,19 +1,22 @@
 
 snakefile: snakefile
-use_singularity:
+use-singularity: True
 latency-wait: 45
+max-jobs-per-second: 1
 reason: True
 show-failed-logs: True
 keep-going: True
 printshellcmds: True
 rerun-incomplete: True
-restart-times: 3
+restart-times: 1
+keep-incomplete: True
 
 # Cluster submission
-cluster_jobname: "clariTEannot_{rule}"              # Provide a custom name for the jobscript that is submitted to the cluster.
-jobs: 20                              #never use more than N parallel jobs in total
-cluster: "sbatch -p gdec --nodes=1 -c {resources.cpu} --mem={resources.mem} --time={resources.time} --output=\"logs/slurm_{rule}_%x_%J.out\" --error=\"logs/slurm_{rule}_%x_%J.log\""
+jobname: "clariTE.{rule}.{jobid}"     # Provide a custom name for the jobscript that is submitted to the cluster
+jobs: 320                             #never use more than N parallel jobs in total
+cluster: "sbatch -p gdec --nodes=1 -c {resources.cpu} --mem={resources.mem} --time={resources.runtime} --output=/dev/null --error=\"logs/slurm_%x_%J.log\""
 
 default-resources:
   - mem=8000
   - cpu=1
+  - runtime="01:00:00"

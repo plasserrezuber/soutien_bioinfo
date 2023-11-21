@@ -100,3 +100,5 @@ Describe TE length proportion changes for 10 top TE-families compared to referen
 ## Authors and acknowledgment  
 
 Pauline LASSERRE-ZUBER (INRAe), Frederic CHOULET (INRAe)  
+
+# jobid: 83, external: Submitted batch job 64920140, jobscript: /home/palasser/projects/soutien_bioinfo/test_CLARITE_smk/.snakemake/tmp.em3pgetm/clariTE.repeatmasker.83

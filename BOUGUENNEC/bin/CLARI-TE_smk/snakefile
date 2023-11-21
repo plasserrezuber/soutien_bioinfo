@@ -32,7 +32,7 @@ rule merge_chrom_gff3:
     singularity:
         "singularity_RMclariTE.sif"
     resources:
-        time="01:00:00"
+        runtime="01:00:00"
     shell: "gt gff3 -sort -tidy -retainids {input.GFF} 1> {output} 2> {log.err}" 
 
 
@@ -46,7 +46,7 @@ rule check_gff3:
     singularity:
         "singularity_RMclariTE.sif"
     resources:
-        time="00:20:00"
+        runtime="00:20:00"
     shell: "gt gff3validator {input} 1> {output} 2> {log}"
 
 
@@ -66,7 +66,7 @@ rule embl_to_gff3:
     singularity:
         "singularity_RMclariTE.sif"
     resources:
-        time="01:00:00"
+        runtime="01:00:00"
     shell:
         """
         embl_to_gff3.sh {wildcards.chrom} {params} {input}
@@ -82,7 +82,7 @@ rule clariTE:
     singularity:
         "singularity_RMclariTE.sif"
     resources:
-        time="01:00:00",
+        runtime="01:00:00",
         mem=16000
     shell:
         """
@@ -99,8 +99,9 @@ rule repeatmasker:
     singularity:
         "singularity_RMclariTE.sif"
     resources:
-        time="12:00:00",
-        mem=16000
+        runtime="12:00:00",
+        mem=16000,
+        cpu=16
     threads: 16
     params:
         config['clariTElib']
@@ -108,8 +109,8 @@ rule repeatmasker:
         """
         cd results/chrom/{wildcards.chrom}
         RepeatMasker -e crossmatch -lib {params} -xsmall -nolow -xm -pa {threads} -q $(basename {input.fasta})
-        cd ../..
-        rm {input.fasta}.cat {input.fasta}.log {input.fasta}.masked {input.fasta}.ori.out {input.fasta}.out {input.fasta}.tbl
+        cd ../../../
+        rm {input.fasta}.cat {input.fasta}.masked {input.fasta}.ori.out {input.fasta}.out {input.fasta}.tbl
         """
 
 checkpoint chunks_fasta:
@@ -120,7 +121,7 @@ checkpoint chunks_fasta:
     singularity:
         "singularity_RMclariTE.sif"
     resources:
-        time="00:30:00"
+        runtime="00:30:00"
     shell:
         """
         mkdir results/chrom/{wildcards.chrom}
@@ -137,7 +138,7 @@ rule chunks_multi_fasta:
     singularity:
         "singularity_RMclariTE.sif"
     resources:
-        time="00:30:00"
+        runtime="00:30:00"
     shell: "bedtools getfasta -bed {input.bed} -fi {input.fasta} > {output}"
 
 
@@ -149,7 +150,7 @@ rule chunks_bed:
     singularity:
         "singularity_RMclariTE.sif"
     resources:
-        time="00:30:00"
+        runtime="00:30:00"
     shell: "bedtools makewindows -g {input} -w 10000000 > {output}"
 
 
@@ -161,7 +162,7 @@ rule chrom_fai:
     singularity:
         "singularity_RMclariTE.sif"
     resources:
-        time="00:10:00"
+        runtime="00:10:00"
     shell: "samtools faidx {input}"
 
 
@@ -174,7 +175,7 @@ rule chrom_fasta:
     singularity:
         "singularity_RMclariTE.sif"
     resources:
-        time="00:10:00"
+        runtime="00:10:00"
     shell: "samtools faidx {input.gefa} {wildcards.chrom} > {output}"
 
 
@@ -186,8 +187,8 @@ rule genome_fai:
         config['genomeFasta']
     singularity:
         "singularity_RMclariTE.sif"
-    resources:
-        time="00:10:00"
+    resources: 
+        runtime="00:10:00"
     shell: 
         """
         ln -s {input} {output.gefa}

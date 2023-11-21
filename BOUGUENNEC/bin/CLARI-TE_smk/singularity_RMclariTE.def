@@ -52,9 +52,9 @@ export BASH_ENV=/opt/etc/.bashrc
 export PATH=/usr/bin:/usr/bin/crossmatch:$PATH
 export CROSSMATCH_DIR=/usr/bin/crossmatch
 export CROSSMATCH_PRGM=/usr/bin/crossmatch/cross_match
-if [ ! -d $PWD/.repeatmasker-libraries ]; then mkdir $PWD/.repeatmasker-libraries; fi
-if [ ! -d $PWD/.repeatmasker-libraries ]; then ln -s /opt/conda/envs/RMclariTE/share/RepeatMasker/Libraries/* $PWD/.repeatmasker-libraries/; fi
-export REPEATMASKER_LIB_DIR=$PWD/.repeatmasker-libraries
+if [ ! -d ~/.repeatmasker-libraries ]; then mkdir ~/.repeatmasker-libraries; fi
+if [ ! -d ~/.repeatmasker-libraries ]; then ln -s /opt/conda/envs/RMclariTE/share/RepeatMasker/Libraries/* ~/.repeatmasker-libraries/; fi
+export REPEATMASKER_LIB_DIR=~/.repeatmasker-libraries
 . /opt/conda/etc/profile.d/mamba.sh
 source /opt/etc/.bashrc
 
