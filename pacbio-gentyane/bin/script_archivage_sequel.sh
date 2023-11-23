@@ -137,7 +137,7 @@ echo -e "#########################################\n"
 
 echo -e "The archive ${smrtcell_name}.${archive}.metadata.tar.gz will contain theses files :\n"
 
-tar -czvhf ${smrtcell_name}.${archive}.metadata.tar.gz * --exclude='*.subreads.bam'
+tar --exclude='*.subreads.bam' --exclude='*.tar.gz' -czvhf ${smrtcell_name}.${archive}.metadata.tar.gz * 
 
 echo -e "\n"
 
