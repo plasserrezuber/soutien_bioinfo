@@ -18,7 +18,8 @@ onstart:
 rule all:
     input:
         "results/"+config['TeIDsPrefix']+"clariTE.gff3",
-        #expand("results/chrom/{chrom}/{i}.fa.out_anno.embl", chrom=CHROM, i=CHUNK)
+        "reports/dag.dot",
+        "reports/rulegraph.dot"
 
 
 rule merge_chrom_gff3:
@@ -54,6 +55,7 @@ rule check_gff3:
 def embl_list(wildcards):
     checkpoint_output = checkpoints.chunks_fasta.get(**wildcards).output[0]
     return expand("results/chrom/{chrom}/{i}.fa.out_anno.embl", chrom=wildcards.chrom, i=glob_wildcards(os.path.join(checkpoint_output, "{i}.fa")).i)
+
 
 ## verifier si $3 et $embl_files fonctionne bien avec embl2gff.pl dans embl_to_gff.sh
 rule embl_to_gff3:
@@ -108,10 +110,22 @@ rule repeatmasker:
     shell:
         """
         cd results/chrom/{wildcards.chrom}
-        RepeatMasker -e crossmatch -lib {params} -xsmall -nolow -xm -pa {threads} -q $(basename {input.fasta})
+        RepeatMasker -e crossmatch -lib ../../../{params} -xsmall -nolow -xm -pa {threads} -q $(basename {input.fasta})
         cd ../../../
-        rm {input.fasta}.cat {input.fasta}.masked {input.fasta}.ori.out {input.fasta}.out {input.fasta}.tbl
+        rm {input.fasta}.cat {input.fasta}.masked {input.fasta}.ori.out {input.fasta}.out {input.fasta}.tbl {input.fasta}.log
         """
+
+
+rule smk_graphs:
+	output:
+        dag='reports/dag.dot',
+        rulegraph='reports/rulegraph.dot'
+	shell:
+		"""
+		snakemake --dag > {output.dag}
+		snakemake --rulegraph > {output.rulegraph}
+		"""
+
 
 checkpoint chunks_fasta:
     output:

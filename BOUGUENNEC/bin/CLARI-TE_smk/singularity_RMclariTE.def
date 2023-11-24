@@ -54,7 +54,7 @@ export PATH=/usr/bin:/usr/bin/crossmatch:$PATH
 export CROSSMATCH_DIR=/usr/bin/crossmatch
 export CROSSMATCH_PRGM=/usr/bin/crossmatch/cross_match
 if [ ! -d $PWD/.repeatmasker-libraries ]; then mkdir $PWD/.repeatmasker-libraries; fi
-if [ ! -d $PWD/.repeatmasker-libraries/Dfam.embl ]; then ln -s /opt/conda/envs/RMclariTE/share/RepeatMasker/Libraries/* $PWD/.repeatmasker-libraries/; fi
+if [ ! -f $PWD/.repeatmasker-libraries/Dfam.embl ]; then ln -s /opt/conda/envs/RMclariTE/share/RepeatMasker/Libraries/* $PWD/.repeatmasker-libraries/; fi
 export REPEATMASKER_LIB_DIR=$PWD/.repeatmasker-libraries
 . /opt/conda/etc/profile.d/mamba.sh
 source /opt/etc/.bashrc

@@ -52,7 +52,7 @@ Eventually custom the cluster parameters in "cluster_profile/config.yaml" file a
 At first, it is recommended to make a dry-run (code test without execution) of the analysis.  
 This will check all the rules and the parameters in the config.yaml file and print all the command lines which would have been executed.  
 ```console
-snakemake -nrp --use-singularity --singularity-args '--bind /home/palasser/data' -j 20 --profile cluster_profile/
+snakemake -nrp --use-singularity --singularity-args '--bind /home/palasser/data' --profile cluster_profile/
 ```
 
 To have a view of the workflow and its successive rules:  
@@ -79,7 +79,7 @@ The --latency-wait option will permit to deal with busy clusters:
 To launch the smk pipeline:  
 ```console
 ## snakemake command with conda environment and --cluster-config option but deprecated 
-#snakemake --use-conda -j 20 --cluster-config cluster.json --latency-wait 45 --cluster "sbatch --parsable -p {cluster.partition} -c {cluster.cpu} -N {cluster.nodes} --mem={cluster.mem} -t {cluster.time} --job-name={cluster.jobName} -o logs/{cluster.output} -e logs/{cluster.error}"
+#snakemake --use-conda -j 320 --cluster-config cluster.json --latency-wait 45 --cluster "sbatch --parsable -p {cluster.partition} -c {cluster.cpu} -N {cluster.nodes} --mem={cluster.mem} -t {cluster.time} --job-name={cluster.jobName} -o logs/{cluster.output} -e logs/{cluster.error}"
 
 # snakemake command with a profile in folder cluster_profile/config.yaml defining options and cluster parameters
 snakemake --singularity-args '--bind /home/palasser/data' --profile cluster_profile/
