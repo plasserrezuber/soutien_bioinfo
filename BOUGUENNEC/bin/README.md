@@ -46,11 +46,11 @@ To run this snakemake pipeline, it requires that Singularity is installed in ord
 module load gcc/8.1.0 python/3.7.1 snakemake/7.15.1  
 ```
 
-Then, fill in the "config.yml" file with your own genome informations, and the library that RepeatMasker will use if you desire to use another one.  
+Then, fill in the "smk_config.yaml" file with your own genome informations, and the library that RepeatMasker will use if you desire to use another one.  
 Eventually custom the cluster parameters in "cluster_profile/config.yaml" file according to the HPC cluster used.  
 
 At first, it is recommended to make a dry-run (code test without execution) of the analysis.  
-This will check all the rules and the parameters in the config.yaml file and print all the command lines which would have been executed.  
+This will check all the rules and the parameters in the smk_config.yaml file and print all the command lines which would have been executed.  
 ```console
 snakemake -nrp --use-singularity --singularity-args '--bind /home/palasser/data' --profile cluster_profile/
 ```
@@ -62,26 +62,26 @@ snakemake --rulegraph > rulegraph.dot
 
 You can then convert the .dot in .png with [Graphviz](https://dreampuf.github.io/GraphvizOnline)  
 
-Flowchart:  
-![rulegraph](rulegraph.png)
+Flowchart before checkpoint rule:  
+![rulegraph_before](rulegraph_before_checkpoint.png)
 
-The pipeline comes with conda environment file which can be used by Snakemake with the option --use-conda.  
-This workflow is built to be parallelized on HPC cluster and paramaters of calculs are setup for each rule by the cluster.json file.  
-The -j option will allow to have at most 20 subproccess run through the SLURM scheduler.  
+Flowchart after checkpoint rule, i.e. chunks_fasta:  
+![rulegraph_after](rulegraph_after_checkpoint.png)
+
+The pipeline comes with a conda environment and tools that are contained in a singularity image named "singularity_RMclariTE.sif".  
+This workflow is built to be parallelized on HPC cluster and paramaters of calculs are setup for each rule by a config.yaml file and ressources specified directly in snakefile.  
+The -j option will allow to have at most 320 subproccess run through the SLURM scheduler.  
 To visualize the diagram of the parallelized processes, you can run the following command:  
 ```console
 snakemake --dag > dag.dot
 ```
-Diagram:  
-![dag](dag.png)
+Diagram (without RepeatMasker and ClariTE rules as checkpoint not passed yet):  
+![dag](dag_before_checkpoint.png)
 
 The --latency-wait option will permit to deal with busy clusters:
 To launch the smk pipeline:  
 ```console
-## snakemake command with conda environment and --cluster-config option but deprecated 
-#snakemake --use-conda -j 320 --cluster-config cluster.json --latency-wait 45 --cluster "sbatch --parsable -p {cluster.partition} -c {cluster.cpu} -N {cluster.nodes} --mem={cluster.mem} -t {cluster.time} --job-name={cluster.jobName} -o logs/{cluster.output} -e logs/{cluster.error}"
-
-# snakemake command with a profile in folder cluster_profile/config.yaml defining options and cluster parameters
+# snakemake command using the singularity container and a HPC cluster profile in folder cluster_profile/config.yaml defining options and cluster parameters
 snakemake --singularity-args '--bind /home/palasser/data' --profile cluster_profile/
 ```
 

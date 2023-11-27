@@ -1,4 +1,4 @@
-configfile: "config.yml"
+configfile: "smk_config.yaml"
 print("Config is: ", config)
 
 CHROM = config['chromList']
@@ -17,9 +17,7 @@ onstart:
 
 rule all:
     input:
-        "results/"+config['TeIDsPrefix']+"clariTE.gff3",
-        "reports/dag.dot",
-        "reports/rulegraph.dot"
+        "results/"+config['TeIDsPrefix']+"clariTE.gff3"
 
 
 rule merge_chrom_gff3:
@@ -57,7 +55,6 @@ def embl_list(wildcards):
     return expand("results/chrom/{chrom}/{i}.fa.out_anno.embl", chrom=wildcards.chrom, i=glob_wildcards(os.path.join(checkpoint_output, "{i}.fa")).i)
 
 
-## verifier si $3 et $embl_files fonctionne bien avec embl2gff.pl dans embl_to_gff.sh
 rule embl_to_gff3:
     output:
         "results/chrom/{chrom}_clariTE.gff3"
@@ -71,7 +68,8 @@ rule embl_to_gff3:
         runtime="01:00:00"
     shell:
         """
-        embl_to_gff3.sh {wildcards.chrom} {params} {input}
+        \ls -1 {input} |sort -t ':' -k2,2n |tr -s '\n' ' ' > results/chrom/{wildcards.chrom}_embl_list
+        bin/embl_to_gff3.sh {wildcards.chrom} {params}
         """
 
 
@@ -86,10 +84,13 @@ rule clariTE:
     resources:
         runtime="01:00:00",
         mem=16000
+    params:
+        LTR = config['clariTE_LTR'],
+        classi = config['clariTE_classi']
     shell:
         """
         sed -i 's/#Unspecified/#Unknown/' {input.XM}
-        bin/clariTE_1.0/clariTE.pl -dir results/chrom/ -LTR bin/clariTE_1.0/CLARIwheat.LTR_position -classi bin/clariTE_1.0/CLARIwheat.classification -fasta {input.fasta} {input.XM}
+        bin/clariTE_1.0/clariTE.pl -dir results/chrom/{wildcards.chrom}/ -LTR {params.LTR} -classi {params.classi} -fasta {input.fasta} {input.XM}
         """
 
 
@@ -106,7 +107,7 @@ rule repeatmasker:
         cpu=16
     threads: 16
     params:
-        config['clariTElib']
+        config['clariTE_lib']
     shell:
         """
         cd results/chrom/{wildcards.chrom}
@@ -114,17 +115,6 @@ rule repeatmasker:
         cd ../../../
         rm {input.fasta}.cat {input.fasta}.masked {input.fasta}.ori.out {input.fasta}.out {input.fasta}.tbl {input.fasta}.log
         """
-
-
-rule smk_graphs:
-	output:
-        dag='reports/dag.dot',
-        rulegraph='reports/rulegraph.dot'
-	shell:
-		"""
-		snakemake --dag > {output.dag}
-		snakemake --rulegraph > {output.rulegraph}
-		"""
 
 
 checkpoint chunks_fasta:

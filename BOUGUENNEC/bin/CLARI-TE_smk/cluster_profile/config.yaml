@@ -12,7 +12,7 @@ restart-times: 1
 keep-incomplete: True
 
 # Cluster submission
-jobname: "clariTE.{rule}.{jobid}"     # Provide a custom name for the jobscript that is submitted to the cluster
+jobname: "RMclariTE-smk.{rule}.{jobid}"     # Provide a custom name for the jobscript that is submitted to the cluster
 jobs: 320                             #never use more than N parallel jobs in total
 cluster: "sbatch -p gdec --nodes=1 -c {resources.cpu} --mem={resources.mem} --time={resources.runtime} --output=/dev/null --error=\"logs/slurm_%x_%J.log\""
 

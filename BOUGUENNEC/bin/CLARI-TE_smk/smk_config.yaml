@@ -9,4 +9,10 @@ TeIDsPrefix: "SecerLo7_"
 chromList: ["chr1R", "chr2R", "chr3R", "chr4R", "chr5R", "chr6R", "chr7R", "chrUn"]
 
 ## Library used by RepeatMasker: "bin/clariTE_1.0/CLARIwheat.fasta" by default, can be changed if you have another TE sequence database
-clariTElib: "bin/clariTE_1.0/CLARIwheat.fasta"
+clariTE_lib: "bin/clariTE_1.0/CLARIwheat.fasta"
+
+## LTR annotation file used by ClariTE:
+clariTE_LTR: "bin/clariTE_1.0/CLARIwheat.LTR_position"
+
+## Classification used by ClariTE: corresponding file sequence id to family id
+clariTE_classi: "bin/clariTE_1.0/CLARIwheat.classification"
