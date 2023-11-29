@@ -7,7 +7,7 @@ wildcard_constraints:
     chrom="[A-Za-z0-9]+"
 
 onsuccess:
-    print("Workflow finished with no error")
+    print("Workflow finished with success")
 
 onstart:
     print("##### ClariTE annotation Workflow #####\n") 

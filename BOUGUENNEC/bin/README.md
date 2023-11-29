@@ -52,7 +52,7 @@ Eventually custom the cluster parameters in "cluster_profile/config.yaml" file a
 At first, it is recommended to make a dry-run (code test without execution) of the analysis.  
 This will check all the rules and the parameters in the smk_config.yaml file and print all the command lines which would have been executed.  
 ```console
-snakemake -nrp --use-singularity --singularity-args '--bind /home/palasser/data' --profile cluster_profile/
+snakemake -nrp --singularity-args '--bind /home/palasser/data' --profile cluster_profile/
 ```
 
 To have a view of the workflow and its successive rules:  
@@ -65,12 +65,12 @@ You can then convert the .dot in .png with [Graphviz](https://dreampuf.github.io
 Flowchart before checkpoint rule:  
 ![rulegraph_before](rulegraph_before_checkpoint.png)
 
-Flowchart after checkpoint rule, i.e. chunks_fasta:  
+Flowchart after checkpoint rule, i.e. chunks_fasta, obtained after the pipeline has finished:  
 ![rulegraph_after](rulegraph_after_checkpoint.png)
 
-The pipeline comes with a conda environment and tools that are contained in a singularity image named "singularity_RMclariTE.sif".  
+The pipeline comes with a conda environment and tools (crossmatch, CLARI-TE) that are contained in a singularity image named "singularity_RMclariTE.sif".  
 This workflow is built to be parallelized on HPC cluster and paramaters of calculs are setup for each rule by a config.yaml file and ressources specified directly in snakefile.  
-The -j option will allow to have at most 320 subproccess run through the SLURM scheduler.  
+In the config.yaml file, "jobs" (-j option) will allow to have at most 320 subproccess run through the SLURM scheduler, and "latency-wait" will permit to deal with busy clusters.  
 To visualize the diagram of the parallelized processes, you can run the following command:  
 ```console
 snakemake --dag > dag.dot
@@ -78,8 +78,9 @@ snakemake --dag > dag.dot
 Diagram (without RepeatMasker and ClariTE rules as checkpoint not passed yet):  
 ![dag](dag_before_checkpoint.png)
 
-The --latency-wait option will permit to deal with busy clusters:
-To launch the smk pipeline:  
+The diagram after checkpoint can be obtained when smk pipeline has finished, but is not really readable (too large due to hundreds of parallel sub jobs).  
+
+To launch the smk pipeline with sinngularity:  
 ```console
 # snakemake command using the singularity container and a HPC cluster profile in folder cluster_profile/config.yaml defining options and cluster parameters
 snakemake --singularity-args '--bind /home/palasser/data' --profile cluster_profile/
