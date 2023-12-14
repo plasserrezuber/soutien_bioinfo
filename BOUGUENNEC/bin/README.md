@@ -80,9 +80,10 @@ Diagram (without RepeatMasker and ClariTE rules as checkpoint not passed yet):
 
 The diagram after checkpoint can be obtained when smk pipeline has finished, but is not really readable (too large due to hundreds of parallel sub jobs).  
 
-To launch the smk pipeline with sinngularity:  
+To launch the smk pipeline with sinngularity in a screen (screen -S "name" / screen -list / screen ctrl-A + d (to detach)/ screen -r "name" (to reattach)):  
 ```console
-# snakemake command using the singularity container and a HPC cluster profile in folder cluster_profile/config.yaml defining options and cluster parameters
+## snakemake command using the singularity container and a HPC cluster profile in folder cluster_profile/config.yaml defining options and cluster parameters
+## adapt the "bind" argument of singularity to the path you need to mount into the singularity container (to make it visible, and be able to use files in this path).
 snakemake --singularity-args '--bind /home/palasser/data' --profile cluster_profile/
 ```
 
