@@ -1,0 +1,18 @@
+# Path to the genome's fasta to annotate
+genomeFasta: "storage/groups/gdec/shared/aegilops_ventricosa/ae_ventricosa_assembly.1Mb.fa"
+
+# Fill in the TEs' ID prefix for feature annotation in gff3. It is recommanded to follow a nomenclature shared by your scientific community.
+# Example: 2 first letters of the genus, 3 first letters of the species, short name of the variety/accession.
+TeIDsPrefix: "ae_ventricosa_"
+
+# Fill in chromosome names, names have to be identical to headers in the genomeFasta file
+chromList: ["ctg1Mb"]
+
+## Library used by RepeatMasker: "bin/clariTE_1.0/CLARIwheat.fasta" by default, can be changed if you have another TE sequence database
+clariTE_lib: "bin/clariTE_1.0/CLARIwheat.fasta"
+
+## LTR annotation file used by ClariTE:
+clariTE_LTR: "bin/clariTE_1.0/CLARIwheat.LTR_position"
+
+## Classification used by ClariTE: corresponding file sequence id to family id
+clariTE_classi: "bin/clariTE_1.0/CLARIwheat.classification"
